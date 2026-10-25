@@ -34,4 +34,12 @@ class Document extends Model
     public function production_components() {
         return $this->hasManyThrough(ProductionComponent::class, Component::class);
     }
+
+    public function getDisplayMessages(): array {
+      try {
+        return (array) json_decode($this->display_messages, 1);
+      } catch (\Exception $e) {
+        return [];
+      }
+    }
 }

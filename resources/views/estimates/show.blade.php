@@ -89,17 +89,158 @@
                     </div>
                 </div>
 
-                <ul class="flex mt-4">
-                    <li class="mr-4"><a class="font-bold" href="#documents-{{ $estimate->id }}" id="btn-toggle-documents"><i class="fa fa-file-text-o"></i> Documents</a></li>
+                <ul class="flex mt-4 text-lg">
+                    <li class="mr-4"><a class="font-bold text-blue-800" href="#documents-{{ $estimate->id }}" id="btn-toggle-documents"><i class="fa fa-file-text-o"></i> Documents</a></li>
                     @if (request()->user()->hasPermissions('debug'))
-                    <li><a href="#debug-{{ $estimate->id }}" id="btn-toggle-debug"><i class="fa fa-bug"></i> Debug</a></a></li>
+                    <li><a href="#debug-{{ $estimate->id }}" id="btn-toggle-debug" class="text-blue-800"><i class="fa fa-bug"></i> Debug</a></a></li>
                     @endif
                 </ul>
 
                 <div>
                     <div id="documents-container">
-                        documents
-                    </div>
+                        <table class="w-full mt-4" cellpadding="4" cellspacing="4">
+                        <thead>
+                        <tr class="bg-gray-800 text-white ">
+                            <!--<th></th>-->
+                            <th>QTY</th>
+                            <th style="width: 50%;" class="text-left">Description</th>
+                            <th class="text-left">Cost</th>
+                            <th class="print-action-column text-left">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($documents as $key => $document)
+                            <tr class="hover:bg-gray-100">
+                            <!--<td><button class="btn btn-default btn-xs" data-target="#document{{$key}}" data-toggle="collapse"><span class="glyphicon glyphicon-eye-open"></span></button></td>-->
+                            <td class="text-center align-top">{{number_format($document->quantity)}}</td>
+                            <td>
+                                @if ($document->is_pending)
+                                <a style="color: hsl(0, 71%, 57%);">PENDING</a> -
+                                @endif
+                                {{$document->report_description}}
+                                @if (!empty($document->specification))
+                                <span style="font-size: 80%">(<a class="toggle-specification" href="#">Show User Specification</a>)</span>
+                                <pre class="specification-embed-container">{{ trim($document->specification) }}</pre>
+                                @endif
+                                <div style="padding-left: 30px;">
+                                    @foreach($document->components as $component)
+                                        <div>&bull; {{$component->report_description}}</div>
+                                    @endforeach
+                                    @if($document->production && $document->production->custom_description_1)
+                                        <div>&bull; {{$document->production->custom_description_1}}</div>
+                                    @endif
+                                    @if($document->production && $document->production->custom_description_2)
+                                        <div>&bull; {{$document->production->custom_description_2}}</div>
+                                    @endif
+                                        <div>&bull; Weight: {{ $document->production->weight ?? '&mdash;' }}lbs |
+                                        @if ($document->production && $document->production->weight)
+                                        {{ round($document->production->weight * 453.592, 0) }}g
+                                        @endif</div>
+                                    @if (request()->user()->hasPermissions('estimate_admin') && !empty($document->production))
+                                    <div>
+                                        Production Timing: {{ $document->production->hour_range}} hours
+                                        {!! $document->is_digital_only ? ' | <span class="estimate-tag-digital-only">Digital Only</span>' : '' !!}
+                                    </div>
+                                    @endif
+                                    @if (!empty($document->getDisplayMessages()))
+                                    <div class="document-display-messages-container">
+                                        @foreach ($document->getDisplayMessages() as $document_message)
+                                        <div class="document-message">{{ $document_message }}</div>
+                                        @endforeach
+                                    </div>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="cost-cell" style="width: 160px;">
+                            @if(!empty($document->production))
+                                <a class="cost-text">
+                                {{number_format($document->production->sell, 2)}}
+                                </a>
+                                <div class="cost-details">
+                                Bind: {{number_format($document->production->bind_sell, 2)}}<br/>
+                                Print: {{number_format($document->production->sell - $document->production->bind_sell, 2)}}
+                                </div>
+                            @else
+                                &ndash;
+                            @endif
+                            </td>
+                            <td class="print-action-column">
+                            @if (!auth()->user()->isReadOnly() && !$estimate->has_alert_disable_interact)
+                            <form method="POST" action="#" role="role" class="form-inline">
+                                {{csrf_field()}}
+                                <span class="user-action-controls" style="display: inline-block;">
+                                <input name="_method" type="hidden" value="DELETE">
+                                @if($document->is_custom && auth()->user()->isAdmin() && auth()->user()->hasPermissions('price_management'))
+                                <a class="btn btn-link btn-set-custom-parameters" data-document-id="{{$document->id}}" style="font-weight: bold; padding: 0;">Estimate Detail</a> |
+                                @endif
+                                <a type="button" class="btn btn-link btn-edit-estimate" style="padding:0" href="#">
+                                Edit</a>
+                                | <button type="submit" class="btn btn-link btn-delete-document" style="padding:0">Delete</button>
+                                </span>
+                                <span class="print-order-notifier" style="display: none; color: #999; font-style: italic;">Print Order</span>
+                                @if (request()->user()->hasPermissions('estimate_admin'))
+                                | <a class="btn btn-link btn-production-details"
+                                        style="padding:0;"
+                                        data-document-id="{{$document->id}}"
+                                        data-estimate-id="{{$document->estimate->id}}"
+                                >Production Details</a>
+                                @endif
+                            </form>
+                            @else
+                            &ndash;
+                            @endif
+                            </td>
+                            </tr>
+                            <tr style="display: none;">
+                            <td colspan="12" class="hiddenRow">
+                                <div class="accordian-body collapse" id="document{{$key}}">
+                                <table class="table">
+                                    <thead>
+                                    <tr style="font-weight:bold">
+                                        <td>Components</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach($document->components as $component)
+                                    <tr>
+                                        <td>{{$component->report_description}}</td>
+                                    </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                                </div>
+                            </td>
+                            </tr>
+
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            @if (request()->user()->hasPermissions('estimate_admin') && $documents->count() > 0)
+                            <tr>
+                                <td colspan="3">&nbsp;</td>
+                                <td>
+
+                                    <a class="btn btn-link btn-production-details all"
+                                        style="padding:0;"
+                                        data-document-id="all"
+                                        data-estimate-id="{{$estimate->id}}"
+                                    >Production Details (All)</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">&nbsp;</td>
+                                <td>
+                                    <button class="btn btn-link btn-adjustments-handle"
+                                        style="padding:0;"
+                                        data-document-id="all"
+                                        data-estimate-id="{{$estimate->id}}"
+                                    >Adjustments</button>
+                                </td>
+                            </tr>
+                            @endif
+                        </tfoot>
+                    </table>
+                    </div><!--#documents-container-->
                     <div id="debug-container" class="hidden">
                         <table class="">
                         <tbody>
@@ -113,7 +254,7 @@
                         </tbody>
                         <tbody>
                         </table>
-                    </div>
+                    </div><!--#debug-container-->
                 </div>
             </div>
         </div>
