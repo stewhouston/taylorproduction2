@@ -17,6 +17,7 @@ Route::middleware([
         return redirect('/estimates');
     })->name('dashboard');*/
 
+    Route::get('/', [Estimates::class, 'index'])->name('estimates.index');
     Route::get('/estimates', [Estimates::class, 'index'])->name('estimates.index');
     Route::get('/estimates/archives', [Estimates::class, 'archives'])->name('estimates.archives');
     Route::get('/estimate/create', [Estimates::class, 'create'])->name('estimate.create');
