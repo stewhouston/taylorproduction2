@@ -70,4 +70,30 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+    * @alias for method `hasPermissions`
+    */
+    public function hasPermission(string $permission_string): bool {
+      return $this->hasPermissions($permission_string);
+    }
+
+    /** Ensure the current user has required permissions to perform some action.
+    *    @param $permission_string string Comma separated string of permissions to check for. Checking one permission is also fine.
+    */
+    public function hasPermissions(string $permissions_string): bool {
+      $permissions = explode(',', $permissions_string);
+
+      foreach($permissions as $p) {
+        if (strpos($this->permissions, $p) === false) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    public function isReadOnly() {
+      return $this->hasPermissions('read_only');
+    }
 }

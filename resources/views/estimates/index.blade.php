@@ -20,19 +20,19 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="px-8 max-w-[80%] mx-auto">
+        <div class="px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
                 @if (!empty($search_term))
-                    <div class="text-2xl mb-4">Searching for: <span class="font-semibold">{{ $search_term }}</span></div>
+                    <div class="text-2xl mb-4">Searching for: <span class="font-semibold>"{{ $search_term }}</span></div>
                 @endif
-                <table id="primary-estimate-list" class="w-full">
+                <table id="primary-estimate-list" class="w-full" cellpadding="4" cellspacing="4">
                     <thead>
                         <tr class="bg-gray-800 text-white">
                             <th class="text-left py-2 pl-4">Estimate&nbsp;#</th>
                             <th class="text-left">Job Number</th>
                             <th class="text-left">Job Name</th>
                             <th style="width: 100px;" class="text-left">Mail Date</th>
-                            <th class="text-left"># of Documents</th>
+                            <th class="text-left" style="width: 140px;"># of Documents</th>
                             <th class="text-left">Files Required By</th>
                             <th style="max-width: 120px;" class="text-left">Alerts</th>
                             <th class="text-left">Created/Last Modified By</th>
@@ -49,7 +49,7 @@
                                 </td>
                                 <td class="client_reference_description">{{$estimate->client_reference_description}}</td>
                                 <td class="client_reference_mail_date">{{$estimate->client_reference_mail_date}}</td>
-                                <td class="document_count" style="text-align: center; width: 120px;">{{$estimate->documents->count()}}</td>
+                                <td class="document_count text-center">{{$estimate->documents->count()}}</td>
                                 <td class=""><span class="files-required-by">
                                     @if ($estimate->files_require_adjustment && substr($estimate->files_require_adjustment, 0, 4) !== '0000')
                                         {{ $estimate->files_require_adjustment }}
@@ -71,8 +71,13 @@
                                 </div>
                                 </td>
                                 <td class="__last_modified_by_resolved">LAST_MODIFIED_BY</td>
-                                <td class="actions" style="padding-right: 16px; font-size: 86%; padding-top: 9px;">
-                                    SHIPPING
+                                <td class="actions" style="padding-right: 16px; font-size: 86%; padding-top: 9px; width: 170px;">
+                                    @if (!auth()->user()->isReadOnly())
+                                        <a class="shipping-link inline-block mr-4" href="#">Shipping</a>
+                                        <a class="btn-archive-estimate" href="#archive-{{ $estimate->id }}">{{$estimate->is_archived ? 'Unarchive' : 'Archive'}}</a>
+                                    @else
+                                        &nbsp;
+                                    @endif
                                 </td>
                             </tr>
                             @endif
@@ -100,6 +105,7 @@
             }, 100);
         });
 
+        // Convert database timestamps into human-readable dates
         $('.files-required-by').text(function(i, sqlDate) {
             return filesRequiredDisplayDate(sqlDate);
         });
@@ -128,18 +134,35 @@
 
             return {
                 beforeClose: function(params) {
-                var feather = this;
+                    var feather = this;
 
-                if (params.action === 'cancel') {
-                    return;
-                }
-                else if (params.action === 'submit') {
-                    $estimateRow.addClass('estimate-archived');
-                    $btn.text('Unarchive');
-                    setEstimateArchiveState(estimateId, true, params.status);
-                }
+                    if (params.action === 'cancel') {
+                        return;
+                    }
+                    else if (params.action === 'submit') {
+                        $estimateRow.addClass('estimate-archived');
+                        $btn.text('Unarchive');
+                        setEstimateArchiveState(estimateId, true, params.status);
+                    }
                 }
             };
         });
+
+        function setEstimateArchiveState(estimateId, estimateIsArchived, status) {
+            var estimateUrl = location.origin + '/estimates/' + estimateId;
+            var qs = 'is_archived=' + (estimateIsArchived ? 1 : 0);
+            qs += '&status=' + status;
+
+            return $.ajax({
+                method: 'POST',
+                url: estimateUrl + '/set_archive_state?' + qs,
+            done: function() {
+                console.log(arguments);
+            },
+            error: function() {
+                console.error(arguments);
+            }
+            });
+        }
     </script>
 </x-app-layout>
