@@ -17,8 +17,16 @@ class Estimate extends Model
         'estimate_comment', 'file_require_adjust_reason', 'files_require_adjustment', 'cusip'
     ];
 
+    public function company() {
+        return $this->belongsTo(Company::class);
+    }
+
     public function documents() {
         return $this->hasMany(Document::class);
+    }
+
+    public function components() {
+        return $this->hasManyThrough(Component::class, Document::class);
     }
 
     public function getAlerts(): array {

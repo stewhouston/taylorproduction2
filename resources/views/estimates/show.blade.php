@@ -3,7 +3,7 @@
         <div class="flex justify-between">
             <div>
                 <h2 class="font-semibold text-2xl text-gray-800 leading-tight">
-                    {{ __('Estimate') . ' #' . $estimate->id }} (COMPANY_NAME)
+                    {{ __('Estimate') . ' #' . $estimate->id }} ({{ $estimate->company->name }})
                 </h2>
                 <div class="text-lg">
                     <span class="font-semibold">Status:</span> <span class="italic">{{ !empty($estimate->status) ? ucfirst(str_replace('_', ' ', $estimate->status)) : 'Active' }}</span>
@@ -88,11 +88,64 @@
                         </div>
                     </div>
                 </div>
+
+                <ul class="flex mt-4">
+                    <li class="mr-4"><a class="font-bold" href="#documents-{{ $estimate->id }}" id="btn-toggle-documents"><i class="fa fa-file-text-o"></i> Documents</a></li>
+                    @if (request()->user()->hasPermissions('debug'))
+                    <li><a href="#debug-{{ $estimate->id }}" id="btn-toggle-debug"><i class="fa fa-bug"></i> Debug</a></a></li>
+                    @endif
+                </ul>
+
+                <div>
+                    <div id="documents-container">
+                        documents
+                    </div>
+                    <div id="debug-container" class="hidden">
+                        <table class="">
+                        <tbody>
+                            @foreach($documents as $key => $document)
+                            <tr class="debug_row_{{$key}}">
+                            <td>
+                                {{$document}}
+                            </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script type="text/javascript">
+        @foreach ($documents as $key => $document)
+        @if (!empty($document->production))
+        $(".debug_row_{{$key}}")
+            .JSONView({!!$document->debug()!!}, {collapsed: true})
+            .JSONView('expand', 1);
+        @endif
+        @endforeach
+
+        // Manual tab system between Documents / Debug
+        $('#btn-toggle-documents').on('click', function(event) {
+            event.preventDefault();
+            $('#documents-container').show();
+            $('#debug-container').hide();
+            $('#btn-toggle-documents').addClass('font-bold');
+            $('#btn-toggle-debug').removeClass('font-bold');
+        });
+
+        $('#btn-toggle-debug').on('click', function(event) {
+            event.preventDefault();
+            $('#documents-container').hide();
+            $('#debug-container').show();
+            $('#btn-toggle-debug').addClass('font-bold');
+            $('#btn-toggle-documents').removeClass('font-bold');
+        });
+
+        // Mail date to human readable format
         $('#mail-date-text-value').text(function(i, basicDate) {
             if (!basicDate.trim() || basicDate == '--') {
             return '--';
@@ -118,7 +171,6 @@
             if (!confirm('Are you absolutely sure you want to delete this estimate?')) {
                 return;
             }
-            $('#formDeleteEstimate').submit();
         });
     </script>
 
@@ -129,8 +181,7 @@
     @endsection
 
     @section('scripts')
-    <script type="text/javscript" src="/js/jquery.jsonview.min.js"></script>
     @parent
-        
+    <script type="text/javascript" src="/js/jquery.jsonview.min.js"></script>       
     @endsection
 </x-app-layout>

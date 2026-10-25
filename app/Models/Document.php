@@ -4,6 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// @todo port from legacy app
+class DocumentDecoratorJson {
+    public function __construct(Document $document) {
+        return 'todo';
+    }
+
+    public function __toString() {
+        return '["todo"]';
+    }
+}
+
 #[Table('documents')]
 class Document extends Model
 {
@@ -16,5 +27,13 @@ class Document extends Model
 
     public function estimate() {
     	return $this->belongsTo(Estimate::class);
+    }
+
+    public function production() {
+        return $this->hasOne(ProductionDocument::class);
+    }
+
+    public function debug() {
+        return new DocumentDecoratorJson($this);
     }
 }

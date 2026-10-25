@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Laravel\Head\Facades\Head;
 use App\Models\Estimate;
+use App\Models\Document;
 use App\Services\EstimateService;
 
 
@@ -68,9 +69,11 @@ class Estimates extends Controller
         }
 
         Head::title("{$estimate->client_reference_number} - {$estimate->client_reference_description} - Estimate - Taylor Estimating");
+        $documents = Document::where('estimate_id', $id)->orderBy('created_at', 'ASC')->get();
 
         return view('estimates.show', [
-            'estimate' => $estimate
+            'estimate' => $estimate,
+            'documents' => $documents
         ]);
     }
 
