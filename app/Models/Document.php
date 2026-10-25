@@ -3,17 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
-// @todo port from legacy app
-class DocumentDecoratorJson {
-    public function __construct(Document $document) {
-        return 'todo';
-    }
-
-    public function __toString() {
-        return '["todo"]';
-    }
-}
+use App\Services\Decorators\DocumentDecoratorJson;
 
 #[Table('documents')]
 class Document extends Model
@@ -33,7 +23,15 @@ class Document extends Model
         return $this->hasOne(ProductionDocument::class);
     }
 
+    public function components() {
+        return $this->hasMany(Component::class);
+    }
+
     public function debug() {
         return new DocumentDecoratorJson($this);
+    }
+
+    public function production_components() {
+        return $this->hasManyThrough(ProductionComponent::class, Component::class);
     }
 }
