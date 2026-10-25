@@ -12,4 +12,11 @@
             </div>
         </div>
     </div>
+
+    @section('scripts')
+    @parent
+        <script src="/js/jquery.inputmask.js"></script>
+        <script src="/js/jquery.inputmask.date.extensions.js"></script>
+        <script src="/js/jquery.inputmask.extensions.js"></script>
+    @endsection
 </x-app-layout>

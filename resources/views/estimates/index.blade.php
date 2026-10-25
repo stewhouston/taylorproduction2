@@ -11,7 +11,7 @@
                 >
                     Find Estimate
                 </button> 
-                <a class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150"
+                <a class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150 no-underline"
                     href="{{ route('estimates.create') }}"
                 >New Estimate</a>
             </div>
@@ -19,9 +19,9 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="px-8">
+        <div class="px-8 max-w-[80%] mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
-                <table class="w-full">
+                <table id="primary-estimate-list" class="w-full">
                     <thead>
                         <tr>
                             <th class="text-left">Estimate&nbsp;#</th>
@@ -39,7 +39,7 @@
                         @foreach($estimates as $estimate)
                             <tr data-estimate-id="{{$estimate->id}}" class="estimate-row {{$estimate->is_archived ? 'estimate-archived' : ''}}">
                                 <td class="id"><a href="{{route('estimate.show', $estimate->id)}}">{{$estimate->id}}</a></td>
-                                <td class="client_reference_number"><a href="{{route('estimate.show', $estimate->id)}}">{{$estimate->client_reference_number}}</a>{!! $estimate->is_print_order ? '<span class="tbl-label-print-order">Print Order</span>' : '' !!}</td>
+                                <td class="client_reference_number"><a href="{{route('estimate.show', $estimate->id)}}">{{$estimate->client_reference_number}}</a>{!! $estimate->is_print_order ? '<span class="inline-block ml-2 text-orange-600 bold">Print Order</span>' : '' !!}</td>
                                 <td class="client_reference_description">{{$estimate->client_reference_description}}</td>
                                 <td class="client_reference_mail_date">{{$estimate->client_reference_mail_date}}</td>
                                 <td class="document_count" style="text-align: center; width: 120px;">COUNT</td>
@@ -61,13 +61,14 @@
                         @endforeach
                     </tbody>
                 </table>
-                <div>
+                <div class="mt-4">
                     {{ $estimates->links() }}
                 </div>
             </div>
         </div>
     </div>
 
+    <script type="text/javascript" src="/js/estimate-archive-lightbox.js"></script>
     <script type="text/javascript">
         $('#btn-find-estimate').click(function() {
             var $findEstimate = $('#find-estimate');
@@ -78,6 +79,37 @@
             setTimeout(function() { 
                 $findEstimate.focus() 
             }, 100);
+        });
+
+        $.estimateArchiveFeatherlight('#primary-estimate-list', '.btn-archive-estimate', function(event, $btn) {
+            event.preventDefault();
+
+            var $estimateRow = $btn.closest('tr');
+            var estimateId = $estimateRow.data('estimate-id');
+            var estimateIsArchived = $estimateRow.is('.estimate-archived');
+
+            // Unarchive/reactivate
+            if (estimateIsArchived) {
+                $btn.text('Archive');
+                $estimateRow.removeClass('estimate-archived');
+                setEstimateArchiveState(estimateId, false, 'active');
+                return false;
+            }
+
+            return {
+                beforeClose: function(params) {
+                var feather = this;
+
+                if (params.action === 'cancel') {
+                    return;
+                }
+                else if (params.action === 'submit') {
+                    $estimateRow.addClass('estimate-archived');
+                    $btn.text('Unarchive');
+                    setEstimateArchiveState(estimateId, true, params.status);
+                }
+                }
+            };
         });
     </script>
 </x-app-layout>
