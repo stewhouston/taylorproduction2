@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 use Laravel\Head\Facades\Head;
 use App\Models\Estimate;
 use App\Models\Document;
+use App\Models\Company;
+use App\Models\PricingRateSet;
 use App\Services\EstimateService;
+use App\Services\ShippingService;
 
 
 class Estimates extends Controller
@@ -53,12 +56,21 @@ class Estimates extends Controller
         ]);
     }
 
-    public function create() {
+    public function create(Request $request) {
         Head::title('Create Estimate - Taylor Estimating');
 
-        return view('estimates.create', [
-           
+        $stat_holidays_db = ShippingService::getStatHolidaysDb();
+        $all_companies = Company::getScopePermissible($request->user(), [
+            'filter' => ['TDMP']
         ]);
+        $user_company_id = (int) $request->user()->company->id;
+        if ($request->user()->isAdmin() && $request->user()->hasPermission('price_management')) {
+            $pricing_rate_sets = PricingRateSet::all()->sortByDesc('created_at');
+        } else {
+            $pricing_rate_sets = PricingRateSet::where('company_id', $user_company_id)->get();
+        }
+
+        return view('estimates.create', compact('stat_holidays_db', 'all_companies', 'user_company_id', 'pricing_rate_sets'));
     }
 
     public function show(Request $request, $id) {

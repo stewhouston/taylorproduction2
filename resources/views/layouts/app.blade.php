@@ -19,7 +19,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.5/lodash.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/1.4.5/numeral.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.2/moment.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.43/js/bootstrap-datetimepicker.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.5.0/featherlight.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.5.3/jquery.timeago.min.js"></script>
         <script src="/js/taylor1.js"></script>
@@ -28,11 +27,9 @@
         @section('styles')
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/tooltipster.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/themes/tooltipster-noir.min.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.43/css/bootstrap-datetimepicker.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.6.1/featherlight.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
-        <link rel="stylesheet" href="/css/datepicker3.css">
         <link rel="stylesheet" href="/css/taylor.css">
         @show
 

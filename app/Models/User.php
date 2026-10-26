@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -69,6 +70,18 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function company() {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function role() {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function isAdmin() {
+        return $this->role->name == 'admin';
     }
 
     /**
