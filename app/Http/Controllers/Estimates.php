@@ -67,11 +67,13 @@ class Estimates extends Controller
         Head::title("{$estimate->client_reference_number} - {$estimate->client_reference_description} - Estimate - Taylor-Demers Estimating");
         $documents = Document::where('estimate_id', $id)->orderBy('created_at', 'ASC')->get();
         $document_types = DocumentType::orderBy('order_index', 'asc')->get();
+        $costs = $estimate->getAllCosts();
 
         return view('estimates.show', [
             'estimate' => $estimate,
             'documents' => $documents,
-            'document_types' => $document_types
+            'document_types' => $document_types,
+            'costs' => $costs
         ]);
     }
 
@@ -140,8 +142,30 @@ class Estimates extends Controller
         $estimate = Estimate::find($id);
         $costs = $estimate->getAllCosts();
         $has_file_req_adjustment = (bool) (!empty($estimate->files_require_adjustment) && !ShippingService::isEmptyMoment($estimate->files_require_adjustment));
+        $est_active_rate_set = PricingRateSet::getEstimateRateSet($estimate);
         $uses_inactive_rate_set = (bool) (empty($est_active_rate_set) || !PricingRateSet::isActiveRateSet($est_active_rate_set, $estimate->company_id));
         return view('estimates.print', compact('estimate', 'costs', 'has_file_req_adjustment', 'uses_inactive_rate_set'));
+    }
+
+    public function ajaxSetRushFee(Request $request, int $estimate_id) {
+        $estimate = Estimate::find($estimate_id);
+
+        $query = $request->all();
+
+        if (empty($query['has_rush_fee']) && intval($query['has_rush_fee']) !== 0) {
+            return response()->json(['error' => '409/Must provide a `has_rush_fee` parameter with a value of either 0 or 1.'], 409);
+        }
+        elseif (intval($query['has_rush_fee']) === 1) {
+            $estimate->has_rush_fee = 1;
+        }
+        elseif (intval($query['has_rush_fee']) === 0) {
+            $estimate->has_rush_fee = 0;
+        }
+
+        $estimate->last_modified_by = $request->user()->id;
+        $estimate->save();
+
+        return response()->json($estimate->getAllCosts(), 200);
     }
 
     public function ajaxSetArchiveState(Request $request, $id) {

@@ -1,8 +1,17 @@
+<script type="text/javascript" src="/js/jQuery-2.2.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.2/moment.min.js"></script>
+<style type="text/css">
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+</style>
 <div class="container">
     <div class="block estimate">
 
         <div class="taylor-estimate-header-container">
-            <div style="padding: 10px;" id="print-btns">
+            <div style="padding: 10px;" id="print-btns" class="no-print">
                 <a style="color: blue; text-decoration:underline; cursor: pointer; display: inline-block; margin-right: 8px;"
                    onclick="window.print()"
                 >
@@ -102,7 +111,7 @@
                     </div>
                     @endif
 
-                    <script>
+                    <script type="text/javascript">
                     $('.files-required-by').text(function(i, sqlDate) {
                         sqlDate = sqlDate.trim();
 

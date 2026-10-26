@@ -45,6 +45,10 @@
     margin-right: 5px;
 }
 
+#list-toggle-rush-fee.active a {
+    background-color: #99a12c;
+}
+
 @media screen and (min-width:992px) {
     .nav-horizontal a {
         text-align: center;
@@ -59,4 +63,17 @@
         font-size: 44px;
         padding: 10px
     }
+}
+
+#add-document-menu {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+    right: 30px;
+    width: 220px;
+}
+
+#add-document-menu.active {
+    opacity: 1;
+    pointer-events: auto;
 }

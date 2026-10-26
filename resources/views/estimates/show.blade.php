@@ -41,7 +41,7 @@
                             </a>
                         </li>
 
-                        <li class="{{ $estimate->has_rush_fee ? 'active' : '' }}">
+                        <li id="list-toggle-rush-fee" class="{{ $estimate->has_rush_fee ? 'active' : '' }}">
                             <a href="#" id="toggle-rush-fee"><i class="fa fa-bolt"></i> Rush Fee</a>
                         </li>
                         <li>
@@ -165,13 +165,13 @@
                             </td>
                             <td class="cost-cell" style="width: 160px;">
                             @if(!empty($document->production))
-                                <a class="cost-text">
-                                {{number_format($document->production->sell, 2)}}
+                                <a class="cost-text underline cursor-pointer">
+                                    {{number_format($document->production->sell, 2)}}
                                 </a>
-                                <div class="cost-details">
-                                Bind: {{number_format($document->production->bind_sell, 2)}}<br/>
-                                Print: {{number_format($document->production->sell - $document->production->bind_sell, 2)}}
-                                </div>
+                                <div class="cost-details hidden text-green-600 leading-tight">
+                                    Bind: {{number_format($document->production->bind_sell, 2)}}<br/>
+                                    Print: {{number_format($document->production->sell - $document->production->bind_sell, 2)}}
+                                    </div>
                             @else
                                 &ndash;
                             @endif
@@ -291,7 +291,19 @@
 
     <script type="text/javascript" src="/js/estimate-archive-lightbox.js"></script>
     <script type="text/javascript">
+        var w = window;
+
         taylor.estimateId = {{ $estimate->id }};
+        w.estimate = {};
+        // Current url without a trailing slash. For use in ajax requests.
+        w.estimate.url = location.href.replace(/\/$/, '');
+        w.estimate.subTotal = {{ $costs['sub_total'] }};
+        w.estimate.taxes = {{ $costs['taxes'] }};
+        w.estimate.total = {{ $costs['total'] }};
+        w.estimate.hasRushFee = {{ $estimate->has_rush_fee ? 'true' : 'false' }};
+        w.estimate.isArchived = {{ $estimate->is_archived ? 'true' : 'false' }};
+        w.estimate.isPrintOrder = {{ $estimate->is_print_order ? 'true' : 'false' }};
+        w.estimate.adjustCount = {{ $estimate->adjust_count ?? 0 }};
 
         // Manual tab system between Documents / Debug
         $('#btn-toggle-documents').on('click', function(event) {
@@ -341,6 +353,18 @@
                 return;
             }
         });
+
+        $('#toggle-rush-fee').on('click', function(event) {
+            if (w.estimate.isPrintOrder) {
+                return confirm('To enable or disable a rush fee, the estimate must be unmarked as a Print Order.');
+            }
+            event.preventDefault();
+            toggleRushFee(event);
+        });
+
+        $('#documents-container').on('click', '.cost-text', function(event) {
+            $(this).closest('.cost-cell').find('.cost-details').toggle();
+        });
         
         $.estimateArchiveFeatherlight('#taylor-button-nav-bar', '#btn-archive-estimate', function(event, $btn) {
             event.preventDefault();
@@ -370,7 +394,7 @@
         });
 
         function setEstimateArchiveState(estimateId, estimateIsArchived, status) {
-            var estimateUrl = location.origin + '/estimates/' + estimateId;
+            var estimateUrl = location.origin + '/estimate/' + estimateId;
             var qs = 'is_archived=' + (estimateIsArchived ? 1 : 0);
             qs += '&status=' + status;
 
@@ -386,6 +410,28 @@
             });
         }
 
+        function toggleRushFee(e) {
+            // Primary toggle mechanism.
+            w.estimate.hasRushFee = !w.estimate.hasRushFee;
+
+            $('#toggle-rush-fee').closest('li').toggleClass('active');
+            $('#rush-fee-quote-row').toggle();
+
+            var qs = 'has_rush_fee=' + (w.estimate.hasRushFee ? 1 : 0);
+
+            $.ajax({
+                method: 'POST',
+                url: w.estimate.url + '/set_rush_fee?' + qs,
+                done: function(estimateCosts) {
+                    console.log(arguments);
+                    updateAllCosts(estimateCosts);
+                },
+                error: function() {
+                    console.error(arguments);
+                }
+            });
+        };
+
         @foreach ($documents as $key => $document)
         @if (!empty($document->production))
         $(".debug_row_{{$key}}")
@@ -399,19 +445,6 @@
     @parent
     <link rel="stylesheet" href="/css/estimate-show.css" />
     <link rel="stylesheet" href="/css/jquery.jsonview.css" />
-    <style type="text/css">
-    #add-document-menu {
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-        pointer-events: none;
-        right: 30px;
-        width: 220px;
-    }
-    #add-document-menu.active {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    </style>
     @endsection
 
     @section('scripts')

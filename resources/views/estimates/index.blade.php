@@ -149,7 +149,7 @@
         });
 
         function setEstimateArchiveState(estimateId, estimateIsArchived, status) {
-            var estimateUrl = location.origin + '/estimates/' + estimateId;
+            var estimateUrl = location.origin + '/estimate/' + estimateId;
             var qs = 'is_archived=' + (estimateIsArchived ? 1 : 0);
             qs += '&status=' + status;
 

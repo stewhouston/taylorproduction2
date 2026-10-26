@@ -27,7 +27,8 @@ Route::middleware([
     Route::post('/estimate/{id}/update', [Estimates::class, 'update'])->name('estimate.update');
     Route::get('/estimate/{id}/destroy', [Estimates::class, 'destroy'])->name('estimate.destroy');
     Route::get('/estimate/{id}/print', [Estimates::class, 'print'])->name('estimate.print');
-    Route::post('/estimates/{id}/set_archive_state', [Estimates::class, 'ajaxSetArchiveState'])->name('estimate.ajaxSetArchiveState');
+    Route::post('/estimate/{id}/set_archive_state', [Estimates::class, 'ajaxSetArchiveState'])->name('estimate.ajaxSetArchiveState');
+    Route::post('/estimate/{id}/set_rush_fee', [Estimates::class, 'ajaxSetRushFee'])->name('estimate.ajaxSetRushFee');
 
     Route::get('/shipping/estimate/{id}', [Estimates::class, 'show'])->name('shipping.drops');
 });
