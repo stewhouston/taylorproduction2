@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Attributes\Table;
 
 #[Table('curve')]
 class Curve extends Model

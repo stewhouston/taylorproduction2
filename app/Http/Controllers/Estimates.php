@@ -138,8 +138,10 @@ class Estimates extends Controller
 
     public function print(int $id) {
         $estimate = Estimate::find($id);
-        // TODO more fields required
-        return view('estimates.print', compact('estimate'));
+        $costs = $estimate->getAllCosts();
+        $has_file_req_adjustment = (bool) (!empty($estimate->files_require_adjustment) && !ShippingService::isEmptyMoment($estimate->files_require_adjustment));
+        $uses_inactive_rate_set = (bool) (empty($est_active_rate_set) || !PricingRateSet::isActiveRateSet($est_active_rate_set, $estimate->company_id));
+        return view('estimates.print', compact('estimate', 'costs', 'has_file_req_adjustment', 'uses_inactive_rate_set'));
     }
 
     public function ajaxSetArchiveState(Request $request, $id) {

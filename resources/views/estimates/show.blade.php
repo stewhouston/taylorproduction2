@@ -20,8 +20,16 @@
     <div class="py-8">
         <div class="lg:px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
-                <div id="archived-estimate-message" class="text-center bg-yellow-100 border border-yellow-800 py-2 rounded-md" style="display: {{ $estimate->is_archived ? 'block' : 'none' }};">
-                    This estimate is archived. <strong>Status:</strong> <span id="archived-estimate-status">{{ $estimate->status }}</span>
+
+                <div id="archived-estimate-message" class="text-center bg-yellow-100 border border-yellow-800 py-2 rounded-md mb-2" style="display: {{ $estimate->is_archived ? 'block' : 'none' }};">
+                    This estimate is archived. <strong>Status:</strong> <span id="archived-estimate-status">{{ ucfirst($estimate->status) }}</span>
+                </div>
+
+                <div id="estimate-alerts-message" class="bg-red-100 border border-red-800 py-2 px-4 rounded-md mb-2" style="display: {{ $estimate->has_alert && $estimate->alerts ? 'block' : 'none' }};">
+                    <strong>Alerts ({{ count($estimate->getAlerts()) }}):</strong>
+                    @foreach ($estimate->getAlerts() as $alert_msg)
+                        {{ $alert_msg }}<br />
+                    @endforeach
                 </div>
 
                 @if (!auth()->user()->isReadOnly())
@@ -354,7 +362,7 @@
                     else if (params.action === 'submit') {
                         $btn.parent().addClass('active');
                         $('#archived-estimate-message').show();
-                        $('#archived-estimate-status').text(params.status);
+                        $('#archived-estimate-status').text(_.upperFirst(params.status));
                         setEstimateArchiveState(taylor.estimateId, true, params.status);
                     }
                 }

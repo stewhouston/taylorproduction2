@@ -33,6 +33,10 @@ class Estimate extends Model
       return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function dropInstances() {
+      return $this->hasMany(DropInstance::class);
+    }
+
     public function getAlerts(): array {
         if (empty($this->alerts)) {
             return [];

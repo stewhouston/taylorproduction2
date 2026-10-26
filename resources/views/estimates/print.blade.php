@@ -45,7 +45,7 @@
             <div style="
                 text-align: center;
                 margin-bottom: 6px;
-                font-size: 13px;
+                font-size: 14px;
             ">Taylor Demers Mail Processing Inc. ‐ 8 Kenview Blvd, Brampton, ON, L6T 5E4<br />
                 Phone: (416) 332‐6806 Fax: (416) 427‐5533
             </div>
@@ -75,7 +75,11 @@
                 <strong>Date:</strong>
                     {{ date('d/m/Y', strtotime($estimate->created_at)) }} <br />
                 <strong>By:</strong>
-                    {{$estimate->createdBy->name}}
+                    @if ($estimate->createdBy)
+                        {{$estimate->createdBy->name}}
+                    @else
+                        —
+                    @endif
               </td>
             </tr>
             <tr>
