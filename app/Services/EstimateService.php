@@ -38,6 +38,16 @@ class EstimateService {
       return $estimate;
     }
 
+    public function update(Request $request, Estimate $estimate) {
+      $this->estimate = $estimate;
+      $data = array_merge($request->all(), [
+        'created_by' => $request->user()->id,
+        'last_modified_by' => $request->user()->id,
+        'company_id' => $this->estimate->company_id
+      ]);
+      return $this->estimate->update($data);
+    }
+
     public function destroy($id) {
       DropInstance::where('estimate_id', $id)->delete();
       return $this->estimate->destroy($id);

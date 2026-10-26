@@ -115,59 +115,20 @@
                         $('select[name="pricing_rate_set_id"]').val(_.get(companyActiveRateSet, 'id'));
                     });
 
-                    // Saving this for the Drops app. Requires one script and stylesheet below
-                    /*$('#client_reference_mail_date').datetimepicker({
-                        dateFormat: 'd MM, yy',
-                        showMillisec: false,
-                        showMicrosec: false,
-                        showTimezone: false,
-                        hour: 16
-                    });*/
-
-                    var blockedDates = getStatHolidayDates();
-                    $('#client_reference_mail_date').datepicker({
-                        dateFormat: 'yy-mm-dd',
-                        beforeShowDay: function(date) {
-                            var stringDate = $.datepicker.formatDate('yy-mm-dd', date);
-                           
-                            if ($.inArray(stringDate, blockedDates) !== -1) {
-                                return [false, "blocked-date-css", "This date is unavailable"]; 
-                            }
-
-                            return [true, ''];
+                var blockedDates = getStatHolidayDates();
+                $('#client_reference_mail_date').datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    beforeShowDay: function(date) {
+                        var stringDate = $.datepicker.formatDate('yy-mm-dd', date);
+                        
+                        if ($.inArray(stringDate, blockedDates) !== -1) {
+                            return [false, "blocked-date-css", "This date is unavailable"]; 
                         }
-                    });
 
-                    //Date picker
-                    /*$('#client_reference_mail_date').datetimepicker({
-                        format: 'MMM D, YYYY'
-                    })
-                    .on('dp.show', function() {
-                        $calendarHighlightStatHolidays();
-                    })
-                    .on('dp.change', function(dateEvent) {
-                        $('#client_reference_mail_date-formatted').val(function() {
-                            return dateEvent.date.format('YYYY-MM-D');
-                        });
-                    })
-                    .on('dp.update', function(event) {
-                        $calendarHighlightStatHolidays();
-                    });*/
+                        return [true, ''];
+                    }
                 });
-
-                function $calendarHighlightStatHolidays() {
-                    var statHolidaysCalendarFormat = _.map(getStatHolidayDates(), function(statMoment) {
-                        return statMoment.format('MM/DD/YYYY');
-                    });
-
-                    $('.bootstrap-datetimepicker-widget').find('.day').each(function(i, dayElem) {
-                        var dayElemDate = dayElem.getAttribute('data-day');
-
-                        if (~statHolidaysCalendarFormat.indexOf(dayElemDate)) {
-                            dayElem.classList.add('stat-holiday');
-                        }
-                    });
-                }
+            });
 
             function getStatHolidayDates() {
                 // from static content ShippingService::getStatHolidays

@@ -20,6 +20,10 @@
     <div class="py-8">
         <div class="lg:px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
+                <div id="archived-estimate-message" class="text-center bg-yellow-100 border border-yellow-800 py-2 rounded-md" style="display: {{ $estimate->is_archived ? 'block' : 'none' }};">
+                    This estimate is archived. <strong>Status:</strong> <span id="archived-estimate-status">{{ $estimate->status }}</span>
+                </div>
+
                 @if (!auth()->user()->isReadOnly())
                     <section class="content-header">
                         <ul id="taylor-button-nav-bar" class="nav-horizontal text-center {{ $estimate->is_print_order ? 'nav-as-print-order' : '' }} {{ $estimate->has_alert_disable_interact ? 'nav-has-alert-disable-interact' : '' }}">
@@ -259,6 +263,8 @@
                         </table>
                     </div><!--#debug-container-->
                 </div>
+
+                <h2 class="text-2xl mt-4">Estimate Totals</h2>
             </div>
         </div>
     </div>
@@ -275,14 +281,9 @@
         @endforeach
     </div>
 
+    <script type="text/javascript" src="/js/estimate-archive-lightbox.js"></script>
     <script type="text/javascript">
-        @foreach ($documents as $key => $document)
-        @if (!empty($document->production))
-        $(".debug_row_{{$key}}")
-            .JSONView({!!$document->debug()!!}, {collapsed: true})
-            .JSONView('expand', 1);
-        @endif
-        @endforeach
+        taylor.estimateId = {{ $estimate->id }};
 
         // Manual tab system between Documents / Debug
         $('#btn-toggle-documents').on('click', function(event) {
@@ -332,6 +333,58 @@
                 return;
             }
         });
+        
+        $.estimateArchiveFeatherlight('#taylor-button-nav-bar', '#btn-archive-estimate', function(event, $btn) {
+            event.preventDefault();
+
+            if ($btn.parent().hasClass('active')) {
+                setEstimateArchiveState(taylor.estimateId, false, 'active');
+                $btn.parent().removeClass('active');
+                $('#archived-estimate-message').hide();
+                return false;
+            }
+
+            return {
+                beforeClose: function(params) {
+                    var feather = this;
+
+                    if (params.action === 'cancel') {
+                        return;
+                    }
+                    else if (params.action === 'submit') {
+                        $btn.parent().addClass('active');
+                        $('#archived-estimate-message').show();
+                        $('#archived-estimate-status').text(params.status);
+                        setEstimateArchiveState(taylor.estimateId, true, params.status);
+                    }
+                }
+            };
+        });
+
+        function setEstimateArchiveState(estimateId, estimateIsArchived, status) {
+            var estimateUrl = location.origin + '/estimates/' + estimateId;
+            var qs = 'is_archived=' + (estimateIsArchived ? 1 : 0);
+            qs += '&status=' + status;
+
+            return $.ajax({
+                method: 'POST',
+                url: estimateUrl + '/set_archive_state?' + qs,
+            done: function() {
+                console.log(arguments);
+            },
+            error: function() {
+                console.error(arguments);
+            }
+            });
+        }
+
+        @foreach ($documents as $key => $document)
+        @if (!empty($document->production))
+        $(".debug_row_{{$key}}")
+            .JSONView({!!$document->debug()!!}, {collapsed: true})
+            .JSONView('expand', 1);
+        @endif
+        @endforeach
     </script>
 
     @section('styles')

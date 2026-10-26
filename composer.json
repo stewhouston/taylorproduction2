@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "fightbulc/moment": "^1.35",
         "laravel/framework": "^13.17",
         "laravel/head": "^0.2.2",
         "laravel/jetstream": "^5.5",

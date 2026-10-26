@@ -23,10 +23,11 @@ Route::middleware([
     Route::get('/estimate/create', [Estimates::class, 'create'])->name('estimate.create');
     Route::post('/estimate/store', [Estimates::class, 'store'])->name('estimate.store');
     Route::get('/estimate/{id}', [Estimates::class, 'show'])->name('estimate.show');
-    Route::get('/estimate/{id}/edit', [Estimates::class, 'show'])->name('estimate.edit');
+    Route::get('/estimate/{id}/edit', [Estimates::class, 'edit'])->name('estimate.edit');
+    Route::post('/estimate/{id}/update', [Estimates::class, 'update'])->name('estimate.update');
     Route::get('/estimate/{id}/destroy', [Estimates::class, 'destroy'])->name('estimate.destroy');
-    Route::get('/estimate/{id}/print', [Estimates::class, 'show'])->name('estimate.print');
-    Route::post('/estimates/{id}/set_archive_state', [Estimates::class])->name('ajaxSetArchiveState');
+    Route::get('/estimate/{id}/print', [Estimates::class, 'print'])->name('estimate.print');
+    Route::post('/estimates/{id}/set_archive_state', [Estimates::class, 'ajaxSetArchiveState'])->name('estimate.ajaxSetArchiveState');
 
-    Route::get('/shipping/estimate/{id}', [Estimate::class, 'show'])->name('shipping.drops');
+    Route::get('/shipping/estimate/{id}', [Estimates::class, 'show'])->name('shipping.drops');
 });

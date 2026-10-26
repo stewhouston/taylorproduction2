@@ -39,7 +39,7 @@ class Estimates extends Controller
     }
 
     public function archives(Request $request) {
-        Head::title('Archives - Taylor Estimating');
+        Head::title('Archives - Taylor-Demers Estimating');
 
         if (!empty($request->query('search'))) {
             $estimates = Estimate::where('is_archived', 1)->orderByDesc('id')->where(function($query) use ($request) {
@@ -64,7 +64,7 @@ class Estimates extends Controller
             return response('Estimate Not Found', 404);
         }
 
-        Head::title("{$estimate->client_reference_number} - {$estimate->client_reference_description} - Estimate - Taylor Estimating");
+        Head::title("{$estimate->client_reference_number} - {$estimate->client_reference_description} - Estimate - Taylor-Demers Estimating");
         $documents = Document::where('estimate_id', $id)->orderBy('created_at', 'ASC')->get();
         $document_types = DocumentType::orderBy('order_index', 'asc')->get();
 
@@ -76,7 +76,7 @@ class Estimates extends Controller
     }
 
     public function create(Request $request) {
-        Head::title('Create Estimate - Taylor Estimating');
+        Head::title('Create Estimate - Taylor-Demers Estimating');
 
         $stat_holidays_db = ShippingService::getStatHolidaysDb();
         $all_companies = Company::getScopePermissible($request->user(), [
@@ -90,6 +90,16 @@ class Estimates extends Controller
         }
 
         return view('estimates.create', compact('stat_holidays_db', 'all_companies', 'user_company_id', 'pricing_rate_sets'));
+    }
+
+    public function edit(Request $request, int $id) {
+        Head::title('Edit Estimate - Taylor-Demers Estimating');
+
+        $estimate = Estimate::find($id);
+
+        $stat_holidays_db = ShippingService::getStatHolidaysDb();
+
+        return view('estimates.edit', compact('stat_holidays_db', 'estimate'));
     }
 
     public function store(Request $request) {
@@ -107,9 +117,29 @@ class Estimates extends Controller
         return redirect(route('estimate.show', $estimate->id));
     }
 
-    public function destroy(Request $request, $id) {
+    public function update(Request $request, int $id) {
+        $estimate = Estimate::find($id);
+
+        $request->validate([
+            'client_reference_number' => 'required',
+            'client_reference_description' => 'required',
+            'client_reference_mail_date' => 'required'
+        ]);
+
+        $this->estimateService->update($request, $estimate);
+
+        return redirect(route('estimate.show', $estimate->id));
+    }
+
+    public function destroy(Request $request, int $id) {
         $this->estimateService->destroy($id);
         return redirect(route('estimates.index'));
+    }
+
+    public function print(int $id) {
+        $estimate = Estimate::find($id);
+        // TODO more fields required
+        return view('estimates.print', compact('estimate'));
     }
 
     public function ajaxSetArchiveState(Request $request, $id) {
