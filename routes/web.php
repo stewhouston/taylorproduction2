@@ -21,10 +21,10 @@ Route::middleware([
     Route::get('/estimates', [Estimates::class, 'index'])->name('estimates.index');
     Route::get('/estimates/archives', [Estimates::class, 'archives'])->name('estimates.archives');
     Route::get('/estimate/create', [Estimates::class, 'create'])->name('estimate.create');
-    Route::get('/estimate/store', [Estimates::class, 'create'])->name('estimate.store');
+    Route::post('/estimate/store', [Estimates::class, 'store'])->name('estimate.store');
     Route::get('/estimate/{id}', [Estimates::class, 'show'])->name('estimate.show');
     Route::get('/estimate/{id}/edit', [Estimates::class, 'show'])->name('estimate.edit');
-    Route::get('/estimate/{id}/destroy', [Estimates::class, 'show'])->name('estimate.destroy');
+    Route::get('/estimate/{id}/destroy', [Estimates::class, 'destroy'])->name('estimate.destroy');
     Route::get('/estimate/{id}/print', [Estimates::class, 'show'])->name('estimate.print');
     Route::post('/estimates/{id}/set_archive_state', [Estimates::class])->name('ajaxSetArchiveState');
 

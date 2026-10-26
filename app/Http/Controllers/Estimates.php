@@ -7,6 +7,7 @@ use Laravel\Head\Facades\Head;
 use App\Models\Estimate;
 use App\Models\Document;
 use App\Models\Company;
+use App\Models\DocumentType;
 use App\Models\PricingRateSet;
 use App\Services\EstimateService;
 use App\Services\ShippingService;
@@ -56,6 +57,24 @@ class Estimates extends Controller
         ]);
     }
 
+    public function show(Request $request, $id) {
+        $estimate = Estimate::find($id);
+      
+        if (empty($estimate)) {
+            return response('Estimate Not Found', 404);
+        }
+
+        Head::title("{$estimate->client_reference_number} - {$estimate->client_reference_description} - Estimate - Taylor Estimating");
+        $documents = Document::where('estimate_id', $id)->orderBy('created_at', 'ASC')->get();
+        $document_types = DocumentType::orderBy('order_index', 'asc')->get();
+
+        return view('estimates.show', [
+            'estimate' => $estimate,
+            'documents' => $documents,
+            'document_types' => $document_types
+        ]);
+    }
+
     public function create(Request $request) {
         Head::title('Create Estimate - Taylor Estimating');
 
@@ -73,20 +92,24 @@ class Estimates extends Controller
         return view('estimates.create', compact('stat_holidays_db', 'all_companies', 'user_company_id', 'pricing_rate_sets'));
     }
 
-    public function show(Request $request, $id) {
-        $estimate = Estimate::find($id);
-      
-        if (empty($estimate)) {
-            return response('Estimate Not Found', 404);
-        }
-
-        Head::title("{$estimate->client_reference_number} - {$estimate->client_reference_description} - Estimate - Taylor Estimating");
-        $documents = Document::where('estimate_id', $id)->orderBy('created_at', 'ASC')->get();
-
-        return view('estimates.show', [
-            'estimate' => $estimate,
-            'documents' => $documents
+    public function store(Request $request) {
+        $request->validate([
+            'client_reference_number' => 'required',
+            'client_reference_description' => 'required',
+            'client_reference_mail_date' => 'required'
         ]);
+        try {
+            $estimate = $this->estimateService->create($request);
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+            return redirect()->back();
+        }
+        return redirect(route('estimate.show', $estimate->id));
+    }
+
+    public function destroy(Request $request, $id) {
+        $this->estimateService->destroy($id);
+        return redirect(route('estimates.index'));
     }
 
     public function ajaxSetArchiveState(Request $request, $id) {

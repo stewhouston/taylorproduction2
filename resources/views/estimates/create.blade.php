@@ -11,13 +11,18 @@
 
                 <div class="text-xl font-semibold border-b border-gray-300 mb-4 pb-2">Estimate Details</div>
 
+                @if (session('error'))
+                    <div class="text-red-600 mb-4">
+                    {{ session('error') }}
+                    </div>
+                @endif
+
                 <form action="{{route('estimate.store')}}" method="POST" autocomplete="off">
                 {{ csrf_field() }}
 
                 <div class="col-lg-8 col-lg-offset-2">
 
                     <div class="box box-primary">
-                    <div class="box-body">
 
                         <div class="flex mb-4{{ $errors->has('client_reference_number') ? ' has-error' : '' }}">
                             <label for="client_reference_number" class="mr-4 pt-2 font-semibold w-[180px]">Job Number *</label>
@@ -41,8 +46,7 @@
                         <div class="flex mb-4">
                             <label for="client_reference_mail_date" class="mr-4 pt-2 font-semibold w-[180px]">Mail Date</label>
                             <div class="col-sm-9">
-                                <input type="hidden" name="client_reference_mail_date" value="" id="client_reference_mail_date-formatted" autocomplete="off" />
-                                <input type="text" id="client_reference_mail_date" class="w-[400px]" required autocomplete="off">
+                                <input type="text" id="client_reference_mail_date" name="client_reference_mail_date" class="w-[400px]" required autocomplete="off">
                             </div>
                         </div>
 
@@ -82,12 +86,11 @@
                         @endif
 
                         <div class="form-group">
-                        <div class="flex">
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150 mr-4">Submit</button>
-                            <a class="text-blue-800 pt-2" href="{{route('estimates.index')}}">Cancel</a>
+                            <div class="flex">
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150 mr-4">Submit</button>
+                                <a class="text-blue-800 pt-2" href="{{route('estimates.index')}}">Cancel</a>
+                            </div>
                         </div>
-                        </div>
-                    </div>
                     </div>
                 </div>
             </form>
@@ -121,8 +124,18 @@
                         hour: 16
                     });*/
 
+                    var blockedDates = getStatHolidayDates();
                     $('#client_reference_mail_date').datepicker({
-                        dateFormat: 'd MM, yy'
+                        dateFormat: 'yy-mm-dd',
+                        beforeShowDay: function(date) {
+                            var stringDate = $.datepicker.formatDate('yy-mm-dd', date);
+                           
+                            if ($.inArray(stringDate, blockedDates) !== -1) {
+                                return [false, "blocked-date-css", "This date is unavailable"]; 
+                            }
+
+                            return [true, ''];
+                        }
                     });
 
                     //Date picker
@@ -159,7 +172,7 @@
             function getStatHolidayDates() {
                 // from static content ShippingService::getStatHolidays
                 return _.map(w.taylor.statHolidaysDb, function(customDateObj) {
-                    return moment(customDateObj['date_string'], 'D-MMM-YYYY');
+                    return moment(customDateObj['date_string'], 'D-MMM-YYYY').format('YYYY-MM-DD');
                 });
             }
         }(this));

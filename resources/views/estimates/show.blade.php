@@ -53,7 +53,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)" data-toggle="control-sidebar" id="add-document-button">
+                            <a href="#"  id="btn-add-document">
                             <i class="fa fa-book"></i> Add Document
                             </a>
                         </li>
@@ -240,6 +240,9 @@
                             @endif
                         </tfoot>
                     </table>
+                    @if ($documents->count() === 0)
+                        <div class="mt-2">This estimate has no documents</div>
+                    @endif
                     </div><!--#documents-container-->
                     <div id="debug-container" class="hidden">
                         <table class="">
@@ -258,6 +261,18 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="add-document-menu" 
+        class="bg-gray-800 text-white absolute top-0 mt-8 rounded-md"
+    >
+        <a class="absolute p-2 cursor-pointer" style="right: 12px; top: 10px;" id="btn-close-add-document">x</a>
+        <h3 class="font-semibold text-xl px-4 py-4">Add Document</h3>
+        @foreach ($document_types as $document_type)
+            <ol>
+                <li><a class="block px-4 py-2">{{ $document_type->name }}</a></li>
+            </ol>
+        @endforeach
     </div>
 
     <script type="text/javascript">
@@ -308,6 +323,10 @@
             }
         });
 
+        $('#btn-add-document, #btn-close-add-document').on('click', function(event) {
+            $('#add-document-menu').toggleClass('active');
+        });
+
         $('#btn-delete-estimate').click(function(event) {
             if (!confirm('Are you absolutely sure you want to delete this estimate?')) {
                 return;
@@ -319,6 +338,19 @@
     @parent
     <link rel="stylesheet" href="/css/estimate-show.css" />
     <link rel="stylesheet" href="/css/jquery.jsonview.css" />
+    <style type="text/css">
+    #add-document-menu {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+        pointer-events: none;
+        right: 30px;
+        width: 220px;
+    }
+    #add-document-menu.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    </style>
     @endsection
 
     @section('scripts')
