@@ -20,7 +20,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
+        <div class="lg:px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
                 @if (!empty($search_term))
                     <div class="text-2xl mb-4">Searching for: <span class="font-semibold>"{{ $search_term }}</span></div>

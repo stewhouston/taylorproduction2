@@ -18,7 +18,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
+        <div class="lg:px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
                 @if (!auth()->user()->isReadOnly())
                     <section class="content-header">
