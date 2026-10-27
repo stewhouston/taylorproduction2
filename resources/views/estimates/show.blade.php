@@ -93,8 +93,12 @@
                             </div>
                         </div>
                         <div>
-                            <div><span class="font-semibold">Created By:</span> todo</div>
-                            <div><span class="font-semibold">Estimate Last Modified By:</span> todo</div>
+                            <div><span class="font-semibold">Created By:</span> 
+                            @if ($estimate->createdBy)
+                                {{ $estimate->createdBy->name }}
+                            @endif
+                            </div>
+                            <div><span class="font-semibold">Estimate Last Modified By:</span> {{ $estimate->getLastModifiedBy() }}</div>
                             <div><span class="font-semibold">Shipping Last Modified By:</span> todo</div>
                             <div><span class="font-semibold">Adjustments Last Modified By:</span> todo</div>
                         </div>
@@ -272,7 +276,96 @@
                     </div><!--#debug-container-->
                 </div>
 
-                <h2 class="text-2xl mt-4">Estimate Totals</h2>
+                <h2 class="text-2xl my-4">Estimate Totals</h2>
+
+                <table class="w-full">
+                <tbody>
+                    <tr class="hover:bg-gray-100">
+                        <td style="width:50%" class="font-semibold">Print Sub Total</td>
+                        <td id="cell-subtotal-value">${{ number_format($costs['print_sub_total'], 2) }}</td>
+                    </tr>
+                <!-- toggle default hidden -->
+                <tr id="price-adjust-row" style="display: none;" class="hover:bg-gray-100">
+                    <td>
+                        <div style="float: right;">Adjustment</div>
+                        <div style="padding-left: 60px; font-size: 13px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
+                            id="price-adjust-reason"
+                        >
+                            <!-- populated by jq -->
+                        </div>
+                    </td>
+                    <td style=""><!-- color set by jq -->
+                        <span id="price-adjust-value"></span>
+                    </td>
+                </tr>
+                <tr id="rush-fee-quote-row" style="display: {{ $estimate->has_rush_fee ? 'table-row' : 'none' }}"  class="hover:bg-gray-100">
+                    <td style="text-align: right;">Rush Fee</td>
+                    <td>${{ number_format($curve_fields['Delivery_Rush_Fee_Dollars'], 2) }}</td>
+                </tr>
+                <tr class="hover:bg-gray-100">
+                    <td style="width:50%" class="font-semibold">Print Total</td>
+                    <td id="cell-print-total-value"
+                        style="vertical-align: top; padding-bottom: 30px;"
+                    >${{ number_format($costs['sub_total_with_rush_fee'], 2) }}</td>
+                </tr>
+                <tr class="hover:bg-gray-100">
+                    <td class="font-semibold">Shipping Sub Total</td>
+                    <td>
+                    <span id="shipping-cost-value">
+                        ${{ number_format($costs['ship_sub_total'], 2) }}
+                    </span>
+
+                        (<a class="btn-toggle-drop-instances" style="cursor: pointer;">{{ $drop_instances->count() }} drops</a>)
+                    </td>
+                </tr>
+                <!-- toggle default hidden -->
+                <tr id="drop-instances-row" style="display: none;" class="hover:bg-gray-100">
+                    <td class="drops-content-cell" colspan="2" style="font-size: 13px;">
+                        <!-- populated by jq -->
+                    </td>
+                </tr>
+                <!-- toggle default hidden -->
+                <tr id="shipping-adjust-row" style="display: none;" class="hover:bg-gray-100">
+                    <td>
+                        <div style="float: right;">Adjustment</div>
+                        <div style="padding-left: 60px; font-size: 13px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
+                            id="shipping-adjust-reason"
+                        >
+                            <!-- populated by jq -->
+                        </div>
+                    </td>
+                    <td style="color: green;">
+                        <span id="shipping-adjust-value"></span>
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-100">
+                    <td class="font-semibold">Shipping Total</td>
+                    <td style="vertical-align: top; padding-bottom: 30px;"
+                    >
+                        ${{ number_format($costs['shipping_cost'], 2) }}
+                    </td>
+                </tr>
+
+                <tr class="hover:bg-gray-100">
+                    <td class="font-semibold">Estimate Sub Total</td>
+                    <td id="cell-estimate-subtotal-value">
+                        ${{ number_format($costs['sub_total_with_ship'], 2) }}
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-100">
+                    <td class="font-semibold">HST ({{ $curve_fields['Tax_HST_Percent'] }}%)</td>
+                    <td id="cell-tax-value">
+                        ${{ number_format($costs['taxes'], 2) }}
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-100">
+                    <td class="font-semibold">Total</td>
+                    <td id="cell-price-total">
+                        ${{ number_format($costs['total'], 2) }}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
             </div>
         </div>
     </div>

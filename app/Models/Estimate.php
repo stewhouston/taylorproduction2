@@ -37,6 +37,42 @@ class Estimate extends Model
       return $this->hasMany(DropInstance::class);
     }
 
+    public function getLastModifiedBy(): string {
+        if (!empty($this->last_modified_by)) {
+            $estimate_last_updated_by_user = User::find($this->last_modified_by);
+            $estimate_last_updated_by = (!empty($estimate_last_updated_by_user))
+                ? $estimate_last_updated_by_user->name : "Unknown";
+        } else {
+            $estimate_last_updated_by = '—';
+        }
+
+        $estimate_last_updated_at = $this->updated_at;
+
+      if (empty($this->documents) || !is_object($this->documents) || $this->documents->count() === 0) {
+        return $estimate_last_updated_by;
+      }
+
+        $last_modified_document = Document::where('estimate_id', $this->id)->orderBy('updated_at', 'DESC')->first();
+
+        if ($estimate_last_updated_at >= $last_modified_document->updated_at && $estimate_last_updated_by != '—') {
+            return $estimate_last_updated_by;
+        } else { // Otherwise, whoever edited a document last
+            $last_modified_user_id = $last_modified_document->last_modified_by;
+        }
+
+      if (empty($last_modified_user_id)) {
+        return $estimate_last_updated_by;
+      }
+
+      $last_modified_by_user = User::find($last_modified_user_id);
+
+      if (empty($last_modified_by_user) || !is_object($last_modified_by_user)) {
+          return $estimate_last_updated_by;
+      }
+
+      return "{$last_modified_by_user->name}";
+    }
+
     public function getAlerts(): array {
         if (empty($this->alerts)) {
             return [];

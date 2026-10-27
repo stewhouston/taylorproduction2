@@ -9,6 +9,8 @@ use App\Models\Document;
 use App\Models\Company;
 use App\Models\DocumentType;
 use App\Models\PricingRateSet;
+use App\Models\Curve;
+use App\Models\DropInstance;
 use App\Services\EstimateService;
 use App\Services\ShippingService;
 
@@ -68,12 +70,16 @@ class Estimates extends Controller
         $documents = Document::where('estimate_id', $id)->orderBy('created_at', 'ASC')->get();
         $document_types = DocumentType::orderBy('order_index', 'asc')->get();
         $costs = $estimate->getAllCosts();
+        $drop_instances = DropInstance::where('estimate_id', $estimate->id)->get();
+        $curve_fields = Curve::getFields(['Tax_HST_Percent', 'Delivery_Rush_Fee_Dollars'], $estimate->company_id)->toArray();
 
         return view('estimates.show', [
             'estimate' => $estimate,
             'documents' => $documents,
             'document_types' => $document_types,
-            'costs' => $costs
+            'costs' => $costs,
+            'drop_instances' => $drop_instances,
+            'curve_fields' => $curve_fields
         ]);
     }
 
