@@ -388,7 +388,7 @@
 
         w.estimate = {};
         // Current url without a trailing slash. For use in ajax requests.
-        w.estimate.url = location.href.replace(/\/$/, '');
+        w.estimate.url = location.href.replace(/[\/#]$/, '');
         w.estimate.subTotal = {{ $costs['sub_total'] }};
         w.estimate.taxes = {{ $costs['taxes'] }};
         w.estimate.total = {{ $costs['total'] }};

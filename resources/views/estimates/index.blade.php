@@ -154,12 +154,12 @@
             return $.ajax({
                 method: 'POST',
                 url: estimateUrl + '/set_archive_state?' + qs,
-            done: function() {
-                console.log(arguments);
-            },
-            error: function() {
-                console.error(arguments);
-            }
+                success: function() {
+                    console.log(arguments);
+                },
+                error: function() {
+                    console.error(arguments);
+                }
             });
         }
     </script>
