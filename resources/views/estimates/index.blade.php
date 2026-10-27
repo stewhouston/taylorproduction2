@@ -23,7 +23,7 @@
         <div class="lg:px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
                 @if (!empty($search_term))
-                    <div class="text-2xl mb-4">Searching for: <span class="font-semibold>"{{ $search_term }}</span></div>
+                    <div class="text-2xl mb-4">Searching for: <span class="font-semibold">{{ $search_term }}</span></div>
                 @endif
                 <table id="primary-estimate-list" class="w-full" cellpadding="4" cellspacing="4">
                     <thead>
@@ -41,7 +41,6 @@
                     </thead>
                     <tbody>
                         @foreach($estimates as $estimate)
-                            @if (!empty($estimate->client_reference_description))
                             <tr data-estimate-id="{{$estimate->id}}" class="estimate-row {{$estimate->is_archived ? 'estimate-archived' : ''}}">
                                 <td class="id py-2 pl-4"><a href="{{route('estimate.show', $estimate->id)}}">{{$estimate->id}}</a></td>
                                 <td class="client_reference_number"><a href="{{route('estimate.show', $estimate->id)}}">
@@ -49,7 +48,7 @@
                                 </td>
                                 <td class="client_reference_description">{{$estimate->client_reference_description}}</td>
                                 <td class="client_reference_mail_date">{{$estimate->client_reference_mail_date}}</td>
-                                <td class="document_count text-center">{{$estimate->documents->count()}}</td>
+                                <td class="document_count text-center">{{$estimate->document_count ?? $estimate->documents->count()}}</td>
                                 <td class=""><span class="files-required-by">
                                     @if ($estimate->files_require_adjustment && substr($estimate->files_require_adjustment, 0, 4) !== '0000')
                                         {{ $estimate->files_require_adjustment }}
@@ -70,7 +69,7 @@
                                     @endif
                                 </div>
                                 </td>
-                                <td class="__last_modified_by_resolved">LAST_MODIFIED_BY</td>
+                                <td class="__last_modified_by_resolved">{{ $estimate->getLastModifiedBy() }}</td>
                                 <td class="actions" style="padding-right: 16px; font-size: 86%; padding-top: 9px; width: 170px;">
                                     @if (!auth()->user()->isReadOnly())
                                         <a class="shipping-link inline-block mr-4" href="#">Shipping</a>
@@ -80,7 +79,6 @@
                                     @endif
                                 </td>
                             </tr>
-                            @endif
                         @endforeach
                     </tbody>
                 </table>

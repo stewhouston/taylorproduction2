@@ -24,8 +24,8 @@
 
                     <div class="box box-primary">
 
-                        <div class="flex mb-4{{ $errors->has('client_reference_number') ? ' has-error' : '' }}">
-                            <label for="client_reference_number" class="mr-4 pt-2 font-semibold w-[180px]">Job Number *</label>
+                        <div class="flex mb-4 items-center{{ $errors->has('client_reference_number') ? ' has-error' : '' }}">
+                            <label for="client_reference_number" class="mr-4 font-semibold w-[180px]">Job Number *</label>
                             <div class="">
                                 <input id="client_reference_number" name="client_reference_number" type="text" class="w-[400px]" required value="{{ old('client_reference_number') }}">
                                 @if ($errors->has('client_reference_number'))
@@ -36,30 +36,30 @@
                             </div>
                         </div>
 
-                        <div class="flex mb-4">
-                            <label for="client_reference_description" class="mr-4 pt-2 font-semibold w-[180px]">Job Name *</label>
+                        <div class="flex mb-4 items-center">
+                            <label for="client_reference_description" class="mr-4 font-semibold w-[180px]">Job Name *</label>
                             <div class="col-sm-9">
                                 <input id="client_reference_description" name="client_reference_description" type="text" class="w-[400px]" required>
                             </div>
                         </div>
 
-                        <div class="flex mb-4">
-                            <label for="client_reference_mail_date" class="mr-4 pt-2 font-semibold w-[180px]">Mail Date</label>
+                        <div class="flex mb-4 items-center">
+                            <label for="client_reference_mail_date" class="mr-4 font-semibold w-[180px]">Mail Date</label>
                             <div class="col-sm-9">
                                 <input type="text" id="client_reference_mail_date" name="client_reference_mail_date" class="w-[400px]" required autocomplete="off">
                             </div>
                         </div>
 
-                        <div class="flex mb-4">
-                            <label for="cusip" class="mr-4 pt-2 font-semibold w-[180px]">CUSIP</label>
+                        <div class="flex mb-4 items-center">
+                            <label for="cusip" class="mr-4 font-semibold w-[180px]">CUSIP</label>
                             <div class="col-sm-9">
                                 <input id="cusip" name="cusip" type="text" class="w-[400px]" />
                             </div>
                         </div>
 
                         @if (auth()->user()->isAdmin() && auth()->user()->hasPermissions('estimate_admin'))
-                        <div class="flex mb-4">
-                            <label for="company_id" class="mr-4 pt-2 font-semibold w-[180px]">Company</label>
+                        <div class="flex mb-4 items-center">
+                            <label for="company_id" class="mr-4 font-semibold w-[180px]">Company</label>
                             <div class="col-sm-9">
                                 <select id="company_id" name="company_id" class="form-control" required>
                                 <option></option>
@@ -72,8 +72,8 @@
                         @endif
 
                         @if (auth()->user()->isAdmin() && auth()->user()->hasPermissions('price_management'))
-                        <div class="flex mb-4">
-                            <label for="company_id" class="mr-4 pt-2 font-semibold w-[180px]">Pricing Rates</label>
+                        <div class="flex mb-4 items-center">
+                            <label for="company_id" class="mr-4 font-semibold w-[180px]">Pricing Rates</label>
                             <div class="col-sm-9">
                                 <select name="pricing_rate_set_id" class="form-control" required>
                                 <option></option>

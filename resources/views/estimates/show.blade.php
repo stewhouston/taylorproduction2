@@ -299,7 +299,7 @@
                     </td>
                 </tr>
                 <tr id="rush-fee-quote-row" style="display: {{ $estimate->has_rush_fee ? 'table-row' : 'none' }}"  class="hover:bg-gray-100">
-                    <td style="text-align: right;">Rush Fee</td>
+                    <td style="text-align: right;" class="pr-2">Rush Fee</td>
                     <td>${{ number_format($curve_fields['Delivery_Rush_Fee_Dollars'], 2) }}</td>
                 </tr>
                 <tr class="hover:bg-gray-100">
@@ -315,12 +315,12 @@
                         ${{ number_format($costs['ship_sub_total'], 2) }}
                     </span>
 
-                        (<a class="btn-toggle-drop-instances" style="cursor: pointer;">{{ $drop_instances->count() }} drops</a>)
+                        (<a class="btn-toggle-drop-instances underline" style="cursor: pointer;">{{ $drop_instances->count() }} drops</a>)
                     </td>
                 </tr>
                 <!-- toggle default hidden -->
                 <tr id="drop-instances-row" style="display: none;" class="hover:bg-gray-100">
-                    <td class="drops-content-cell" colspan="2" style="font-size: 13px;">
+                    <td class="drops-content-cell" colspan="2" style="font-size: 14px;">
                         <!-- populated by jq -->
                     </td>
                 </tr>
@@ -373,20 +373,19 @@
     <div id="add-document-menu" 
         class="bg-gray-800 text-white absolute top-0 mt-8 rounded-md"
     >
-        <a class="absolute p-2 cursor-pointer" style="right: 12px; top: 10px;" id="btn-close-add-document">x</a>
-        <h3 class="font-semibold text-xl px-4 py-4">Add Document</h3>
+        <a class="absolute p-2 cursor-pointer" style="right: 10px; top: 6px;" id="btn-close-add-document">x</a>
+        <h3 class="font-semibold text-lg px-4 py-4"><i class="fa fa-file-text-o"></i>&nbsp;&nbsp;Add Document</h3>
+        <ol class="mb-4">
         @foreach ($document_types as $document_type)
-            <ol>
-                <li><a class="block px-4 py-2">{{ $document_type->name }}</a></li>
-            </ol>
+            <li><a class="block px-4 py-2 text-white border-t border-gray-700" href="/estimate/{{ $estimate->id }}/document/create/{{ $document_type->slug }}">{{ $document_type->name }}</a></li>
         @endforeach
+        </ol>
     </div>
 
     <script type="text/javascript" src="/js/estimate-archive-lightbox.js"></script>
     <script type="text/javascript">
         var w = window;
 
-        taylor.estimateId = {{ $estimate->id }};
         w.estimate = {};
         // Current url without a trailing slash. For use in ajax requests.
         w.estimate.url = location.href.replace(/\/$/, '');
@@ -398,132 +397,14 @@
         w.estimate.isPrintOrder = {{ $estimate->is_print_order ? 'true' : 'false' }};
         w.estimate.adjustCount = {{ $estimate->adjust_count ?? 0 }};
 
-        // Manual tab system between Documents / Debug
-        $('#btn-toggle-documents').on('click', function(event) {
-            event.preventDefault();
-            $('#documents-container').show();
-            $('#debug-container').hide();
-            $('#btn-toggle-documents').addClass('font-bold');
-            $('#btn-toggle-debug').removeClass('font-bold');
-        });
-
-        $('#btn-toggle-debug').on('click', function(event) {
-            event.preventDefault();
-            $('#documents-container').hide();
-            $('#debug-container').show();
-            $('#btn-toggle-debug').addClass('font-bold');
-            $('#btn-toggle-documents').removeClass('font-bold');
-        });
-
-        // Mail date to human readable format
-        $('#mail-date-text-value').text(function(i, basicDate) {
-            if (!basicDate.trim() || basicDate == '--') {
-            return '--';
-            }
-            return moment(basicDate, 'YYYY-MM-DD').format('MMM D, YYYY');
-        });
-
-        $('#files-required-by').text(function(i, sqlDate) {
-            sqlDate = sqlDate.trim();
-
-            if (!sqlDate || sqlDate == '—') {
-                var msg = sqlDate;
-                $(this).css('color', '#999');
-                return msg || 'No drops created';
-            }
-            else {
-                $(this).css('color', '#c32a07');
-                return moment(sqlDate).format('MMM D, YYYY - h:mma');
-            }
-        });
-
-        $('#btn-add-document, #btn-close-add-document').on('click', function(event) {
-            $('#add-document-menu').toggleClass('active');
-        });
-
-        $('#btn-delete-estimate').click(function(event) {
-            if (!confirm('Are you absolutely sure you want to delete this estimate?')) {
-                return;
-            }
-        });
-
-        $('#toggle-rush-fee').on('click', function(event) {
-            if (w.estimate.isPrintOrder) {
-                return confirm('To enable or disable a rush fee, the estimate must be unmarked as a Print Order.');
-            }
-            event.preventDefault();
-            toggleRushFee(event);
-        });
-
-        $('#documents-container').on('click', '.cost-text', function(event) {
-            $(this).closest('.cost-cell').find('.cost-details').toggle();
-        });
-        
-        $.estimateArchiveFeatherlight('#taylor-button-nav-bar', '#btn-archive-estimate', function(event, $btn) {
-            event.preventDefault();
-
-            if ($btn.parent().hasClass('active')) {
-                setEstimateArchiveState(taylor.estimateId, false, 'active');
-                $btn.parent().removeClass('active');
-                $('#archived-estimate-message').hide();
-                return false;
-            }
-
-            return {
-                beforeClose: function(params) {
-                    var feather = this;
-
-                    if (params.action === 'cancel') {
-                        return;
-                    }
-                    else if (params.action === 'submit') {
-                        $btn.parent().addClass('active');
-                        $('#archived-estimate-message').show();
-                        $('#archived-estimate-status').text(_.upperFirst(params.status));
-                        setEstimateArchiveState(taylor.estimateId, true, params.status);
-                    }
-                }
-            };
-        });
-
-        function setEstimateArchiveState(estimateId, estimateIsArchived, status) {
-            var estimateUrl = location.origin + '/estimate/' + estimateId;
-            var qs = 'is_archived=' + (estimateIsArchived ? 1 : 0);
-            qs += '&status=' + status;
-
-            return $.ajax({
-                method: 'POST',
-                url: estimateUrl + '/set_archive_state?' + qs,
-            done: function() {
-                console.log(arguments);
-            },
-            error: function() {
-                console.error(arguments);
-            }
-            });
-        }
-
-        function toggleRushFee(e) {
-            // Primary toggle mechanism.
-            w.estimate.hasRushFee = !w.estimate.hasRushFee;
-
-            $('#toggle-rush-fee').closest('li').toggleClass('active');
-            $('#rush-fee-quote-row').toggle();
-
-            var qs = 'has_rush_fee=' + (w.estimate.hasRushFee ? 1 : 0);
-
-            $.ajax({
-                method: 'POST',
-                url: w.estimate.url + '/set_rush_fee?' + qs,
-                done: function(estimateCosts) {
-                    console.log(arguments);
-                    updateAllCosts(estimateCosts);
-                },
-                error: function() {
-                    console.error(arguments);
-                }
-            });
-        };
+        w.taylor.estimateId = {{ $estimate->id }};
+        w.taylor.estimate = {!! html_entity_decode(json_encode($estimate->attributesToArray())) !!};
+        w.taylor.shiptos = {!! html_entity_decode(json_encode($shiptos)) !!};
+        w.taylor.documents = {!! html_entity_decode(json_encode($documents, JSON_PRETTY_PRINT)) !!};
+        w.taylor.dropInstances = {!! html_entity_decode(json_encode($drop_instances)) !!};
+        w.taylor.estimateLastModified = new Date("{{ $estimate->getLastModifiedAt() }}");
+        w.taylor.estimateActiveRateSet = {!! html_entity_decode(json_encode($est_active_rate_set)) !!};
+        w.taylor.usesInactiveRateSet = {{ $uses_inactive_rate_set ? 'true' : 'false' }};
 
         @foreach ($documents as $key => $document)
         @if (!empty($document->production))
@@ -533,6 +414,7 @@
         @endif
         @endforeach
     </script>
+    <script type="text/javascript" src="/js/estimate-show.js"></script>
 
     @section('styles')
     @parent

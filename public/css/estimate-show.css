@@ -77,3 +77,9 @@
     opacity: 1;
     pointer-events: auto;
 }
+
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}

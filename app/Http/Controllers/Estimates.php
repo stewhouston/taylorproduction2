@@ -11,31 +11,42 @@ use App\Models\DocumentType;
 use App\Models\PricingRateSet;
 use App\Models\Curve;
 use App\Models\DropInstance;
+use App\Models\Shipto;
 use App\Services\EstimateService;
 use App\Services\ShippingService;
 
 
 class Estimates extends Controller
 {
-    public function __construct(protected EstimateService $estimateService) {
+    public function __construct(
+        protected EstimateService $estimateService,
+        protected ShippingService $shippingService
+    ) {
 
     }
 
     public function index(Request $request) {
         Head::title('Estimates - Taylor Estimating');
 
+        if ($request->user()->isAdmin()) {
+            $estimates = Estimate::orderBy('id', 'DESC');
+        }
+        else {
+            $estimates = Estimate::where('company_id', $request->user()->company_id)->orderBy('id', 'DESC');
+        }
+
+        $estimates = $estimates->where('is_archived', 0)->where('client_reference_number', '!=', '');
+
         if (!empty($request->query('search'))) {
-            $estimates = Estimate::where('is_archived', 0)->orderByDesc('id')->where(function($query) use ($request) {
+            $estimates = $estimates->where(function($query) use ($request) {
                 return $query->orWhere('id', '=', $request->query('search'))
                     ->orWhere('client_reference_number', '=', $request->query('search'))
                     ->orWhere('client_reference_description', 'like', '%' . $request->query('search') . '%');
-            })->simplePaginate(50);
-        } else {
-            $estimates = Estimate::where('is_archived', 0)->orderByDesc('id')->simplePaginate(50);
+            });
         }
 
         return view('estimates.index', [
-           'estimates' => $estimates,
+           'estimates' => $estimates->simplePaginate(50),
            'search_term' => $request->query('search')
         ]);
     }
@@ -43,18 +54,25 @@ class Estimates extends Controller
     public function archives(Request $request) {
         Head::title('Archives - Taylor-Demers Estimating');
 
+        if ($request->user()->isAdmin()) {
+            $estimates = Estimate::orderBy('id', 'DESC');
+        }
+        else {
+            $estimates = Estimate::where('company_id', $request->user()->company_id)->orderBy('id', 'DESC');
+        }
+
+        $estimates = $estimates->where('is_archived', 1)->where('client_reference_number', '!=', '');
+
         if (!empty($request->query('search'))) {
-            $estimates = Estimate::where('is_archived', 1)->orderByDesc('id')->where(function($query) use ($request) {
+            $estimates = $estimates->where(function($query) use ($request) {
                 return $query->orWhere('id', '=', $request->query('search'))
                     ->orWhere('client_reference_number', '=', $request->query('search'))
                     ->orWhere('client_reference_description', 'like', '%' . $request->query('search') . '%');
-            })->simplePaginate(50);
-        } else {
-            $estimates = Estimate::where('is_archived', 1)->orderByDesc('id')->simplePaginate(50);
+            });
         }
 
         return view('estimates.index', [
-           'estimates' => $estimates,
+           'estimates' => $estimates->simplePaginate(50),
            'search_term' => $request->query('search')
         ]);
     }
@@ -72,6 +90,10 @@ class Estimates extends Controller
         $costs = $estimate->getAllCosts();
         $drop_instances = DropInstance::where('estimate_id', $estimate->id)->get();
         $curve_fields = Curve::getFields(['Tax_HST_Percent', 'Delivery_Rush_Fee_Dollars'], $estimate->company_id)->toArray();
+        $shiptos = $this->shippingService->getShiptos($estimate->company_id);
+        $est_active_rate_set = PricingRateSet::getEstimateRateSet($estimate);
+        $uses_inactive_rate_set = (bool) (empty($est_active_rate_set) || !PricingRateSet::isActiveRateSet($est_active_rate_set, $estimate->company_id));
+        $all_rate_sets = PricingRateSet::all()->sortByDesc('created_at');
 
         return view('estimates.show', [
             'estimate' => $estimate,
@@ -79,7 +101,11 @@ class Estimates extends Controller
             'document_types' => $document_types,
             'costs' => $costs,
             'drop_instances' => $drop_instances,
-            'curve_fields' => $curve_fields
+            'curve_fields' => $curve_fields,
+            'shiptos' => $shiptos,
+            'est_active_rate_set' => $est_active_rate_set,
+            'uses_inactive_rate_set' => $uses_inactive_rate_set,
+            'all_rate_sets' => $all_rate_sets
         ]);
     }
 

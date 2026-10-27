@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Table;
 
 #[Table('estimates')]
@@ -71,6 +72,23 @@ class Estimate extends Model
       }
 
       return "{$last_modified_by_user->name}";
+    }
+
+    public function getLastModifiedAt() {
+		$estimate_last_updated_at = $this->updated_at;
+
+        if (empty($this->documents) || !is_object($this->documents) || $this->documents->count() === 0) {
+            return $estimate_last_updated_at;
+        }
+
+      $recent_document_modified_at = $this->documents->sortByDesc('updated_at')->first()->updated_at;
+
+        // Adjustment date gets mirrored onto estimate; in this case use time of last document edit
+        if ($estimate_last_updated_at->equalTo(new Carbon($this->adjustment_date))) {
+            return $recent_document_modified_at;
+        }
+
+        return ($estimate_last_updated_at > $recent_document_modified_at) ? $estimate_last_updated_at : $recent_document_modified_at;
     }
 
     public function getAlerts(): array {

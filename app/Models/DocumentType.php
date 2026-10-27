@@ -10,4 +10,8 @@ class DocumentType extends Model
     protected $fillable = [
         'name', 'slug', 'is_active', 'order_index',
     ];
+
+    public function names() {
+        return $this->belongsToMany(DocumentTypeName::class, 'types_names', 'type_id', 'name_id');
+    }
 }
