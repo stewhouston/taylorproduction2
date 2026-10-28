@@ -297,20 +297,21 @@
                         <td style="width:50%" class="font-semibold">Print Sub Total</td>
                         <td id="cell-subtotal-value">${{ number_format($costs['print_sub_total'], 2) }}</td>
                     </tr>
-                <!-- toggle default hidden -->
-                <tr id="price-adjust-row" style="display: none;" class="hover:bg-gray-100">
+                @if ($estimate->print_sell_adjustment)
+                <tr id="price-adjust-row" class="hover:bg-gray-100">
                     <td>
                         <div style="float: right;">Adjustment</div>
                         <div style="padding-left: 60px; font-size: 13px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
                             id="price-adjust-reason"
                         >
-                            <!-- populated by jq -->
+                            {{ $estimate->print_sell_adjust_reason }}
                         </div>
                     </td>
-                    <td style=""><!-- color set by jq -->
-                        <span id="price-adjust-value"></span>
+                    <td style="color: green;">
+                        <span id="price-adjust-value">${{ number_format($estimate->print_sell_adjustment, 2) }}</span>
                     </td>
                 </tr>
+                @endif
                 <tr id="rush-fee-quote-row" style="display: {{ $estimate->has_rush_fee ? 'table-row' : 'none' }}"  class="hover:bg-gray-100">
                     <td style="text-align: right;" class="pr-2 text-yellow-800">Rush Fee</td>
                     <td>${{ number_format($curve_fields['Delivery_Rush_Fee_Dollars'], 2) }}</td>
@@ -337,20 +338,21 @@
                         <!-- populated by jq -->
                     </td>
                 </tr>
-                <!-- toggle default hidden -->
-                <tr id="shipping-adjust-row" style="display: none;" class="hover:bg-gray-100">
+                @if ($estimate->drop_sell_adjustment)
+                <tr id="shipping-adjust-row" class="hover:bg-gray-100">
                     <td>
                         <div style="float: right;">Adjustment</div>
                         <div style="padding-left: 60px; font-size: 13px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
                             id="shipping-adjust-reason"
                         >
-                            <!-- populated by jq -->
+                           {{ $estimate->drop_sell_adjust_reason }}
                         </div>
                     </td>
                     <td style="color: green;">
-                        <span id="shipping-adjust-value"></span>
+                        <span id="shipping-adjust-value">${{ number_format($estimate->drop_sell_adjustment, 2) }}</span>
                     </td>
                 </tr>
+                @endif
                 <tr class="hover:bg-gray-100">
                     <td class="font-semibold">Shipping Total</td>
                     <td style="vertical-align: top;"

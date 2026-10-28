@@ -184,7 +184,7 @@
                 console.log('OVERRIDES SUCCESS:', updatedEstimate);
                 if (_.isObject(updatedEstimate) && updatedEstimate.client_reference_number) {
                     w.taylor.estimate = updatedEstimate;
-                    w.taylor.applyAdjustOverrides(updatedEstimate);
+                    // w.taylor.applyAdjustOverrides(updatedEstimate); // Page reloads now, this gets swept away, moved to Blade template
                     location.reload();
                 }
             },
@@ -197,8 +197,6 @@
                 }
             }
         });
-
-
     }
 
     // display adjust override data in the show.blade dom
@@ -209,7 +207,7 @@
         if (printSellAdjust) {
             $('#price-adjust-row').show();
 
-            populateShortenedReasonText('#price-adjust-reason', estimate.print_sell_adjust_reason);
+            // populateShortenedReasonText('#price-adjust-reason', estimate.print_sell_adjust_reason);
 
             if (estimate.print_sell_adjustment > 0) {
                 $('#price-adjust-value').text('$' + numeral(estimate.print_sell_adjustment).format('0,0.00'));
@@ -224,7 +222,7 @@
         if (shipSellAdjust) {
             $('#shipping-adjust-row').show();
 
-            populateShortenedReasonText('#shipping-adjust-reason', estimate.drop_sell_adjust_reason);
+            // populateShortenedReasonText('#shipping-adjust-reason', estimate.drop_sell_adjust_reason);
 
             if (estimate.drop_sell_adjustment > 0) {
                 $('#shipping-adjust-value').text('$' + numeral(estimate.drop_sell_adjustment).format('0,0.00'));
