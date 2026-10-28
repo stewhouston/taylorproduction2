@@ -501,8 +501,7 @@ class DocumentService
         $component_sell = $print_setup_sell + round($print_item_rate * $run_sheets, 2);
       }
 
-      $component_sell += PrintSell::csImprintSequenceSetup($attrs['print_o_rates'],
-        $count_imprints, $document_quantity, $is_sequential);
+      $component_sell += PrintSell::csImprintSequenceSetup($attrs['print_o_rates'], $count_imprints, $document_quantity, $is_sequential);
 
       $cover_cut_required          = $cut_required;
       $cover_run_sheets            = $run_sheets;
@@ -510,6 +509,14 @@ class DocumentService
       $cover_print_hours           = $print_hours;
       $cover_print_cost            = $print_cost;
       $cover_component_print_sell  = $component_sell;
+      // there is a good chance this requires refactoring, requires Ian
+      $text_cut_required = 0; // 2026 patch
+      $text_run_sheets = 0;
+      $text_component_weight = 0;
+      $text_print_hours = 0;
+      $text_print_cost = 0;
+      $text_component_print_sell = 0;
+      $cover_component_print_sell = $component_sell;
     }
     elseif ($component_type === 'Text') {
       if ($device === 'TRIVOR') {
@@ -533,6 +540,13 @@ class DocumentService
       $text_print_hours           = $print_hours;
       $text_print_cost            = $print_cost;
       $text_component_print_sell  = $component_sell;
+      // there is a good chance this requires refactoring, requires Ian
+      $cover_component_print_sell = 0; // 2026 patch
+      $cover_cut_required = 0;
+      $cover_run_sheets = 0;
+      $cover_component_weight = 0;
+      $cover_print_hours = 0;
+      $cover_print_cost = 0;
     }
 
     return compact(
