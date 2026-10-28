@@ -46,7 +46,7 @@ class Estimates extends Controller
         }
 
         return view('estimates.index', [
-           'estimates' => $estimates->simplePaginate(50),
+           'estimates' => $estimates->simplePaginate(30),
            'search_term' => $request->query('search')
         ]);
     }
@@ -72,7 +72,7 @@ class Estimates extends Controller
         }
 
         return view('estimates.index', [
-           'estimates' => $estimates->simplePaginate(50),
+           'estimates' => $estimates->simplePaginate(30),
            'search_term' => $request->query('search')
         ]);
     }
