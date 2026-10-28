@@ -108,6 +108,13 @@ class Estimate extends Model
         return (bool) strpos($this->alerts, $alert_msg) !== false;
     }
 
+    public function customDocuments() 
+    {
+        return array_filter($this->documents->toArray(), function($document) {
+            return $document['is_custom'];
+        });
+    }
+
     public function getAllCosts(): array {
       $curve_fields = Curve::getFields(['Delivery_Rush_Fee_Dollars', 'Tax_HST_Percent'], $this->company_id)->toArray();
       $shipping_cost = $this->getShippingCost();

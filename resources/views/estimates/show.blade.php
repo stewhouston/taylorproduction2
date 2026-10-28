@@ -100,7 +100,9 @@
                             </div>
                             <div><span class="font-semibold">Estimate Last Modified By:</span> {{ $estimate->getLastModifiedBy() }}</div>
                             <div><span class="font-semibold">Shipping Last Modified By:</span> todo</div>
+                            @if ($estimate->adjustment_by)
                             <div><span class="font-semibold">Adjustments Last Modified By:</span> todo</div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -148,7 +150,7 @@
                                     @if($document->production && $document->production->custom_description_2)
                                         <div>&bull; {{$document->production->custom_description_2}}</div>
                                     @endif
-                                        <div>&bull; Weight: {{ $document->production->weight ?? '&mdash;' }}lbs |
+                                        <div>&bull; Weight: {{ $document->production->weight ?? '0' }}lbs |
                                         @if ($document->production && $document->production->weight)
                                         {{ round($document->production->weight * 453.592, 0) }}g
                                         @endif</div>
@@ -182,16 +184,17 @@
                             </td>
                             <td class="print-action-column">
                             @if (!auth()->user()->isReadOnly() && !$estimate->has_alert_disable_interact)
-                            <form method="POST" action="#" role="role" class="form-inline">
-                                {{csrf_field()}}
+                            <form method="POST" action="{{ route('estimate.document.delete', $estimate->id) }}" role="role" class="form-inline">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="document_id" value="{{ $document->id }}" />
                                 <span class="user-action-controls" style="display: inline-block;">
-                                <input name="_method" type="hidden" value="DELETE">
                                 @if($document->is_custom && auth()->user()->isAdmin() && auth()->user()->hasPermissions('price_management'))
-                                <a class="btn btn-link btn-set-custom-parameters" data-document-id="{{$document->id}}" style="font-weight: bold; padding: 0;">Estimate Detail</a> |
+                                    <a class="btn btn-link btn-set-custom-parameters" data-document-id="{{$document->id}}" style="font-weight: bold; padding: 0;">Estimate Detail</a> |
                                 @endif
-                                <a type="button" class="btn btn-link btn-edit-estimate" style="padding:0" href="#">
+                                <a type="button" class="btn-edit-estimate p-0 underline text-blue-800" href="#">
                                 Edit</a>
-                                | <button type="submit" class="btn btn-link btn-delete-document" style="padding:0">Delete</button>
+                                | <button type="submit" class="btn-delete-document underline text-blue-800 p-0">Delete</button>
                                 </span>
                                 <span class="print-order-notifier" style="display: none; color: #999; font-style: italic;">Print Order</span>
                                 @if (request()->user()->hasPermissions('estimate_admin'))

@@ -29,6 +29,9 @@
         return moment(basicDate, 'YYYY-MM-DD').format('MMM D, YYYY');
     });
 
+    // Estimate updated at values to human readable format
+    $(".timeago").timeago();
+
     $('#files-required-by').text(function(i, sqlDate) {
         sqlDate = sqlDate.trim();
 

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PricingRateSet extends Model
 {
-    protected $primaryKey = 'id';
+  protected $primaryKey = 'id';
 	public $incrementing = false;
     
     protected $fillable = [

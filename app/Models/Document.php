@@ -15,31 +15,73 @@ class Document extends Model
       'cover_type', 'created_by', 'last_modified_by'
     ];
 
-    public function estimate() {
+    public function estimate() 
+    {
     	return $this->belongsTo(Estimate::class);
     }
 
-    public function production() {
+    public function production() 
+    {
         return $this->hasOne(ProductionDocument::class);
     }
 
-    public function components() {
+    public function components() 
+    {
         return $this->hasMany(Component::class);
     }
 
-    public function debug() {
+    public function debug() 
+    {
         return new DocumentDecoratorJson($this);
     }
 
-    public function production_components() {
+    public function production_components() 
+    {
+
         return $this->hasManyThrough(ProductionComponent::class, Component::class);
     }
 
-    public function getDisplayMessages(): array {
+    public function getDisplayMessages(): array 
+    {
       try {
         return (array) json_decode($this->display_messages, 1);
       } catch (\Exception $e) {
         return [];
       }
+    }
+
+    public function addDisplayMessage(string $message, array $params = []) 
+    {
+      $params = array_merge([
+        'clear' => false,
+        'unique' => true
+      ], $params);
+      $messages = $params['clear'] ? [] : $this->getDisplayMessages();
+      if ($params['unique'] && in_array($message, $messages)) {
+        return;
+      }
+      $messages[] = $message;
+      $this->display_messages = json_encode($messages);
+      $this->save();
+    }
+
+    public function removeDisplayMessage(string $message) 
+    {
+      $messages = $this->getDisplayMessages();
+      if (!in_array($message, $messages)) {
+        return;
+      }
+      $updated_messages = array_reduce($messages, function(array $acc, string $_message) use ($message) {
+        if ($message === $_message) {
+          return $acc;
+        }
+        $acc[] = $_message;
+        return $acc;
+      }, []);
+      if (count($messages) === count($updated_messages)) {
+        return;
+      }
+      $this->display_messages = json_encode($updated_messages);
+      $this->save();
     }
 }

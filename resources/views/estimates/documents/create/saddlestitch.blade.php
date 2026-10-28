@@ -9,6 +9,7 @@
     <div class="py-8">
         <form class="max-w-7xl mx-auto sm:px-6 lg:px-8" method="POST" action="{{ route('estimate.document.store', $estimate->id) }}">
             {{ csrf_field() }}
+            <input type="hidden" name="document_type_id" value="{{$document_type->id}}">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg px-6 py-4 border-t-4 border-blue-600">
 
                 <h3 class="text-xl font-semibold border-b border-gray-300 mb-4 pb-2">Document Details</h3>
