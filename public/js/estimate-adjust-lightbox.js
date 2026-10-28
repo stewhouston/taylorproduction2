@@ -2,7 +2,7 @@
     // Adjustments lightbox
     // split `adjustment_reason` to `print_sell_adjust_reason`, `drop_sell_adjust_reason`, `file_require_adjust_reason`
     $('.btn-adjustments-handle').click(function(event) {
-        var lightboxHtml = ['<div style="width: 700px; height: 400px; position: relative; margin-top: -6px;">',
+        var lightboxHtml = ['<form style="width: 700px; height: 400px; position: relative; margin-top: -6px;" autocomplete="off">',
             '<table>',
                 '<thead><tr>\
                     <th style="font-size: 25px; padding-bottom: 10px;">Overrides</th><th>&nbsp;</th><th>&nbsp;</th>\
@@ -69,7 +69,7 @@
                 </tr>',
                 '</tfoot>',
             '</table>',
-        '</div>'].join('');
+        '</form>'].join('');
 
         var $adjustmentsLightbox = $(lightboxHtml);
         var estimate = w.taylor.estimate || {};

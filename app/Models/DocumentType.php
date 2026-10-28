@@ -11,7 +11,13 @@ class DocumentType extends Model
         'name', 'slug', 'is_active', 'order_index',
     ];
 
-    public function names() {
+    public function names() 
+    {
         return $this->belongsToMany(DocumentTypeName::class, 'types_names', 'type_id', 'name_id');
+    }
+
+    public function sizes()
+    {
+        return $this->belongsToMany(DocumentTypeSize::class, 'types_sizes', 'type_id', 'size_id');
     }
 }

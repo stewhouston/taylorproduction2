@@ -286,9 +286,9 @@
                 @endif
 
                 <div class="mt-8">
-                    <div class="flex">
+                    <div class="flex items-center">
                         <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150 mr-4">Submit</button>
-                        <a class="text-blue-800 pt-2" href="{{route('estimate.show', $estimate->id)}}">Cancel</a>
+                        <a class="text-blue-800" href="{{route('estimate.show', $estimate->id)}}">Cancel</a>
                     </div>
                 </div>
             </div>

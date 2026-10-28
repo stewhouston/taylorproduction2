@@ -176,7 +176,7 @@
                                     @if (request()->user()->hasPermissions('estimate_admin') && !empty($document->production))
                                     <div>
                                         Production Timing: {{ $document->production->hour_range}} hours
-                                        {!! $document->is_digital_only ? ' | <span class="estimate-tag-digital-only">Digital Only</span>' : '' !!}
+                                        {!! $document->is_digital_only ? ' | <span class="estimate-tag-digital-only text-purple-700 italic">Digital Only</span>' : '' !!}
                                     </div>
                                     @endif
                                     @if (!empty($document->getDisplayMessages()))

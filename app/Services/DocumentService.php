@@ -54,7 +54,7 @@ class DocumentService
             //$document = $this->startSingleSheetLogic($request, $attrs);
         break;
         case "multi-sheet":
-            //$document = $this->startMultiSheetLogic($request, $attrs);
+            $document = $this->startMultiSheetLogic($request, $attrs);
         break;
         case "folder":
             //$document = $this->startFolderLogic($request, $attrs);
@@ -84,6 +84,74 @@ class DocumentService
       $destroy = $document->delete();
       $estimate->save();
       return $destroy;
+  }
+
+  protected function startMultiSheetLogic($request, array $attrs = []): Document 
+  {
+    $size            = $request->input('size');
+    $finish          = $request->input('finish');
+    $quantity        = $request->input('quantity');
+    $name            = $request->input('name');
+    $description     = $request->input('description');
+    $bleed           = $request->input('bleed');
+    $stock           = $request->input('text_stock');
+    $print_side1     = $request->input('print_side1');
+    $print_side2     = $request->input('print_side2');
+    $pages           = $request->input('text_pages');
+    $data            = [];
+    $type            = 'Multi Sheet';
+    $component_type  = 'Text';
+    $component_count = 1;
+    $is_digital_only = (bool) json_decode($request->input('is_digital_only') ?: '0');
+    if ($print_side1 !== 'none' && $print_side2 !== 'none' && $pages % 2 > 0) {
+      $pages += 1;
+    }
+    // convert document type short name (e.g. 'MD&A' to full name)
+    $dtn = DocumentTypeName::where('short', $name)->get()->first();
+    // Determine Self Or Plus Cover
+    $report_description = PrintReport::buildDocumentDescription($dtn->name, $description, $type, $size, $finish);
+    $document_user_meta = [
+      'created_by' => $request->user()->id,
+      'last_modified_by' => $request->user()->id
+    ];
+    $document = $this->estimate->documents()->create(array_merge(
+      $request->all(),
+      $document_user_meta,
+      ['specification' => ''],
+      compact('report_description', 'type', 'is_digital_only'),
+      ['active_rate_set_id' => $attrs['active_rate_set_id']]
+    ));
+    $component_report_description = PrintReport::buildComponentDescription(
+      $component_count, $component_type, $pages, $print_side1, $print_side2, $bleed, $stock
+    );
+    $component = $document->components()->create([
+      'type'               => $component_type,
+      'print_side1'        => $print_side1,
+      'print_side2'        => $print_side2,
+      'bleed'              => $bleed,
+      'pages'              => $pages,
+      'stock'              => $stock,
+      'report_description' => $component_report_description,
+    ]);
+    $data = $this->componentConfig(
+      $document, $print_side1, $print_side2, $size, $pages, $finish, $component_type,
+      $type, $quantity, $bleed, $stock, $component_count, 0, 0, 0, $attrs
+    );
+    $component->production()->create($data);
+    list(
+      $data['cover_cut_required'], $data['cover_run_sheets'], $data['cover_component_weight'], $data['cover_print_hours'], $data['cover_print_cost']
+    ) = [0, 0, 0, 0, 0];
+    $component_count                = 1;
+    $document_data = $this->documentConfig(
+      $data['offline_bind_required'], $data['text_cut_required'], $data['cover_cut_required'],
+      $data['text_run_sheets'], $data['cover_run_sheets'], $finish, $quantity, $type, $pages,
+      $data['text_print_hours'], $data['cover_print_hours'], $data['text_print_cost'],
+      $data['cover_print_cost'], $data['text_component_print_sell'], $data['cover_component_print_sell'],
+      $data['text_component_weight'], $data['cover_component_weight'], $data['run_sheet_sqin'],
+      $data['product_sqin'], $attrs
+    );
+    $document->production()->create($document_data);
+    return $document;
   }
 
   protected function startBookLogic($request, $attrs = []): Document 
