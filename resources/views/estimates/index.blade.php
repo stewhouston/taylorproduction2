@@ -48,7 +48,7 @@
                                 </td>
                                 <td class="client_reference_description">{{$estimate->client_reference_description}}</td>
                                 <td class="client_reference_mail_date">{{$estimate->client_reference_mail_date}}</td>
-                                <td class="document_count text-center">{{$estimate->document_count ?? $estimate->documents->count()}}</td>
+                                <td class="document_count text-center">{{ $estimate->documents->count() }}</td>
                                 <td class=""><span class="files-required-by">
                                     @if ($estimate->files_require_adjustment && substr($estimate->files_require_adjustment, 0, 4) !== '0000')
                                         {{ $estimate->files_require_adjustment }}
