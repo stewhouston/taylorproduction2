@@ -78,6 +78,21 @@
     pointer-events: auto;
 }
 
+.ui-datepicker-div, #ui-datepicker-div{
+    z-index: 2147483647 !important;
+}
+
+/* for some reason the bg isnt always loading behind the featherlight */
+.featherlight.taylor-adjustments {
+    /* allow the jquery datepicker to be in front of the featherlight */
+    z-index: 2147483646 !important;
+}
+.featherlight.taylor-adjustments .featherlight-content {
+    border: 2px solid black;
+    box-shadow: 0 0 8px #333;
+    background: #f4f4e8;
+}
+
 .clearfix::after {
   content: "";
   display: table;

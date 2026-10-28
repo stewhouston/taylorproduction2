@@ -25,6 +25,10 @@
                     This estimate is archived. <strong>Status:</strong> <span id="archived-estimate-status">{{ ucfirst($estimate->status) }}</span>
                 </div>
 
+                @if ($estimate->estimate_comment)
+                    <div class="bg-blue-100 border border-blue-800 p-2 mb-2 rounded-md" style="font-style: italic;"><strong>Comment:</strong> {{ $estimate->estimate_comment }}</div>
+                @endif
+
                 <div id="estimate-alerts-message" class="bg-red-100 border border-red-800 py-2 px-4 rounded-md mb-2" style="display: {{ $estimate->has_alert && $estimate->alerts ? 'block' : 'none' }};">
                     <strong>Alerts ({{ count($estimate->getAlerts()) }}):</strong>
                     @foreach ($estimate->getAlerts() as $alert_msg)
@@ -79,10 +83,18 @@
                             <div><span class="font-semibold">Number:</span> <span>{{$estimate->client_reference_number}}</span></div>
                             <div><span class="font-semibold">Description:</span> <span>{{$estimate->client_reference_description}}</span></div>
                             <div><span class="font-semibold">Mail Date:</span> <span id="mail-date-text-value">{{$estimate->client_reference_mail_date}}</span></div>
-                            <div><span class="font-semibold">Files Required By:</span> <span id="files-required-by">—</span></div>
+                            <div><span class="font-semibold">Files Required By:</span> <span id="files-required-by">
+                                @if ($estimate->dropInstances->count() && empty($estimate->files_required_by))
+                                    —
+                                @elseif ($estimate->files_require_adjustment)
+                                    {{ $estimate->files_require_adjustment }}
+                                @else
+                                    {{ $estimate->files_required_by }}
+                                @endif
+                            </span></div>
                             <div>
                             @if ($estimate->file_require_adjust_reason)
-                                <div style="color: #666; font-style: italic; font-size: 13px; margin-bottom: 4px;">
+                                <div style="color: #666; font-style: italic; font-size: 13px; margin-bottom: 4px; font-weight: bold;">
                                     {{ $estimate->file_require_adjust_reason }}
                                 </div>
                                 @else
@@ -101,7 +113,7 @@
                             <div><span class="font-semibold">Estimate Last Modified By:</span> {{ $estimate->getLastModifiedBy() }}</div>
                             <div><span class="font-semibold">Shipping Last Modified By:</span> todo</div>
                             @if ($estimate->adjustment_by)
-                            <div><span class="font-semibold">Adjustments Last Modified By:</span> todo</div>
+                            <div><span class="font-semibold">Adjustments Last Modified By:</span> {{ $estimate->getAdjustLastModifiedBy() }}</div>
                             @endif
                         </div>
                     </div>
@@ -248,8 +260,7 @@
                             <tr>
                                 <td colspan="3">&nbsp;</td>
                                 <td>
-                                    <button class="btn btn-link btn-adjustments-handle"
-                                        style="padding:0;"
+                                    <button class="btn-adjustments-handle p-0 text-blue-800 underline"
                                         data-document-id="all"
                                         data-estimate-id="{{$estimate->id}}"
                                     >Adjustments</button>
@@ -407,6 +418,7 @@
         w.taylor.estimateLastModified = new Date("{{ $estimate->getLastModifiedAt() }}");
         w.taylor.estimateActiveRateSet = {!! html_entity_decode(json_encode($est_active_rate_set)) !!};
         w.taylor.usesInactiveRateSet = {{ $uses_inactive_rate_set ? 'true' : 'false' }};
+        w.taylor.statHolidaysDb = {!! html_entity_decode(json_encode($stat_holidays_db)) !!};
 
         @foreach ($documents as $key => $document)
         @if (!empty($document->production))
@@ -417,15 +429,22 @@
         @endforeach
     </script>
     <script type="text/javascript" src="/js/estimate-show.js"></script>
+    <script type="text/javascript" src="/js/estimate-adjust-lightbox.js"></script>
 
     @section('styles')
     @parent
     <link rel="stylesheet" href="/css/estimate-show.css" />
     <link rel="stylesheet" href="/css/jquery.jsonview.css" />
+    <link rel="stylsheet" href="/css/jquery-ui.min.css" />
+    <link rel="stylesheet" href="/css/jquery-ui.structure.min.css" />
+    <link rel="stylesheet" href="/css/jquery-ui.theme.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css" integrity="sha512-LT9fy1J8pE4Cy6ijbg96UkExgOjCqcxAC7xsnv+mLJxSvftGVmmc236jlPTZXPcBRQcVOWoK1IJhb1dAjtb4lQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
     @endsection
 
     @section('scripts')
     @parent
+    <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.js"></script>
     <script type="text/javascript" src="/js/jquery.jsonview.min.js"></script>       
     @endsection
 </x-app-layout>

@@ -14,7 +14,7 @@ use App\Models\DropInstance;
 use App\Models\Shipto;
 use App\Services\EstimateService;
 use App\Services\ShippingService;
-
+use \Moment\Moment;
 
 class Estimates extends Controller
 {
@@ -94,6 +94,7 @@ class Estimates extends Controller
         $est_active_rate_set = PricingRateSet::getEstimateRateSet($estimate);
         $uses_inactive_rate_set = (bool) (empty($est_active_rate_set) || !PricingRateSet::isActiveRateSet($est_active_rate_set, $estimate->company_id));
         $all_rate_sets = PricingRateSet::all()->sortByDesc('created_at');
+        $stat_holidays_db = ShippingService::getStatHolidaysDb();
 
         return view('estimates.show', [
             'estimate' => $estimate,
@@ -105,7 +106,8 @@ class Estimates extends Controller
             'shiptos' => $shiptos,
             'est_active_rate_set' => $est_active_rate_set,
             'uses_inactive_rate_set' => $uses_inactive_rate_set,
-            'all_rate_sets' => $all_rate_sets
+            'all_rate_sets' => $all_rate_sets,
+            'stat_holidays_db' => $stat_holidays_db
         ]);
     }
 
@@ -220,5 +222,73 @@ class Estimates extends Controller
       }
 
       return 'ok';
+  }
+
+  public function ajaxSetAlerts(Request $request, $estimate_id) 
+  {
+    $estimate = Estimate::find($estimate_id);
+
+    if ($request->input('clearAll')) {
+      $estimate->clearAlerts();
+      if (count($estimate->pendingDocuments()) >= 1) {
+        $estimate->addAlert(DocumentService::CUSTOM_DOCUMENT_PENDING_ALERT);
+      }
+      return 'ok';
+    }
+    else if ($request->input('addAlert')) {
+      $estimate->addAlert($request->input('addAlert'));
+      return 'ok';
+    }
+  }
+
+  public function ajaxSetOverrides(Request $request, $estimate_id) 
+  {
+      $price_adjust_reason = $request->input('priceAdjustReason');
+      $price_adjust_value = $request->input('priceAdjustValue');
+      $ship_adjust_reason = $request->input('shipAdjustReason');
+      $ship_adjust_value = $request->input('shipAdjustValue');
+      $files_req_adjust_date = $request->input('filesReqAdjustDate');
+      $files_req_adjust_reason = $request->input('filesReqAdjustReason');
+      // No idea why urldecode is required. Moved method from GET to POST. If no urldecode, spaces show as %20
+      $estimate_comment = urldecode($request->input('estimateComment'));
+      $custom_alert_text = urldecode($request->input('customAlert'));
+
+      $estimate = Estimate::find($estimate_id);
+
+      // @todo price sanitize
+      $estimate->print_sell_adjustment = $price_adjust_value;
+      $estimate->print_sell_adjust_reason = $price_adjust_reason;
+
+      $estimate->drop_sell_adjustment = $ship_adjust_value;
+      $estimate->drop_sell_adjust_reason = $ship_adjust_reason;
+
+      // files req date; assume formatted by js
+      $estimate->files_require_adjustment = $files_req_adjust_date ?? null;
+      $estimate->file_require_adjust_reason = $files_req_adjust_reason;
+
+      $estimate->adjustment_by = $request->user()->id;
+      $m = new Moment();
+      $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency @TODO confirm this is still relevant in 2026 on the new server
+      $estimate->adjustment_date = $m->format('Y-m-d H:i:s');
+
+      $estimate->estimate_comment = $estimate_comment;
+
+      if ($estimate->hasAdjustments()) {
+        $estimate->adjust_count += 1;
+      }
+      else {
+        $estimate->adjust_count = 0;
+      }
+
+      // $estimate->last_modified_by = $request->user()->id;
+
+      $estimate->save();
+
+      if (!empty($custom_alert_text)) {
+          // causes double save; not ideal but fine
+        $estimate->addAlert($custom_alert_text);
+      }
+
+      return response()->json($estimate);
   }
 }

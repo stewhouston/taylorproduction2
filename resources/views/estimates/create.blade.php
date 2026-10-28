@@ -120,11 +120,9 @@
                     dateFormat: 'yy-mm-dd',
                     beforeShowDay: function(date) {
                         var stringDate = $.datepicker.formatDate('yy-mm-dd', date);
-                        
                         if ($.inArray(stringDate, blockedDates) !== -1) {
                             return [false, "blocked-date-css", "This date is unavailable"]; 
                         }
-
                         return [true, ''];
                     }
                 });

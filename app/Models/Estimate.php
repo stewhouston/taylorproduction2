@@ -91,6 +91,19 @@ class Estimate extends Model
         return ($estimate_last_updated_at > $recent_document_modified_at) ? $estimate_last_updated_at : $recent_document_modified_at;
     }
 
+    public function getAdjustLastModifiedBy(): string {
+        if (empty($this->adjustment_by)) return '—';
+        $adjust_user = User::find($this->adjustment_by);
+        if (empty($adjust_user)) {
+            return "Unknown";
+        }
+        return $adjust_user->name;
+    }
+
+    public function getAdjustLastModifiedAt() {
+        return $this->adjustment_date ?? '—';
+    }
+
     public function getAlerts(): array {
         if (empty($this->alerts)) {
             return [];
@@ -106,6 +119,91 @@ class Estimate extends Model
     public function hasAlert(string $alert_msg): bool {
         if (empty($this->alerts)) return false;
         return (bool) strpos($this->alerts, $alert_msg) !== false;
+    }
+
+    public function addAlert(string $alert_msg, array $params = []) {
+        $params = array_merge([
+            'disables_estimate_interact' => false
+        ], $params);
+
+        if (empty($this->alerts)) {
+        $this->alerts = [$alert_msg];
+        }
+
+        try {
+            $existing_alerts = is_string($this->alerts) ? json_decode($this->alerts, 1) : $this->alerts;
+        }
+        catch (\ErrorException $e) {
+            $existing_alerts = [$alert_msg, 'Requires verification.'];
+        }
+
+        $updated_alerts = array_unique(array_merge([$alert_msg], $existing_alerts));
+
+        $this->has_alert = 1;
+        $this->alerts = json_encode($updated_alerts);
+
+        if ($params['disables_estimate_interact']) {
+            $this->has_alert_disable_interact = 1;
+        }
+
+        $this->save();
+    }
+
+    public function clearAlert(string $alert_msg) 
+    {
+        if (empty($this->alerts)) {
+            return;
+        }
+
+        $filtered_alerts = array_filter(json_decode($this->alerts, 1), function($msg) use ($alert_msg) {
+            if ($alert_msg == $msg) return false;
+            return true;
+        });
+
+        if (!empty($filtered_alerts)) {
+            $this->alerts = json_encode($filtered_alerts);
+        } else {
+            $this->alerts = null;
+            $this->has_alert = 0;
+        }
+
+        $this->save();
+    }
+
+    public function clearAlerts() 
+    {
+      $this->alerts = null;
+      $this->has_alert = 0;
+      $this->save();
+    }
+
+    public function hasAdjustments(): bool {
+        return (bool) trim($this->print_sell_adjust_reason) || trim($this->drop_sell_adjust_reason) || trim($this->file_require_adjust_reason) || floatval($this->print_sell_adjustment) || floatval($this->drop_sell_adjustment) || false;
+    }
+
+    public function clearAdjustments() {
+        $this->print_sell_adjust_reason = null;
+        $this->drop_sell_adjust_reason = null;
+        $this->print_sell_adjustment = null;
+        $this->drop_sell_adjustment = null;
+        $this->adjustment_by = null;
+        $this->adjustment_date = null;
+    }
+
+    public function hasPendingDocuments() 
+    {
+        if (!$this->hasDocuments()) return false;
+        foreach($this->documents as $document) {
+            if ($document->is_pending) return true;
+        }
+        return false;
+    }
+
+    public function pendingDocuments() 
+    {
+        return array_filter($this->documents->toArray(), function($document) {
+            return $document['is_pending'];
+        });
     }
 
     public function customDocuments() 

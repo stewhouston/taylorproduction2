@@ -34,7 +34,6 @@
 
     $('#files-required-by').text(function(i, sqlDate) {
         sqlDate = sqlDate.trim();
-
         if (!sqlDate || sqlDate == '—') {
             var msg = sqlDate;
             $(this).css('color', '#999');
