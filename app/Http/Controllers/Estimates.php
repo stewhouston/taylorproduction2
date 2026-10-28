@@ -265,7 +265,7 @@ class Estimates extends Controller
       // files req date; assume formatted by js
       $estimate->file_require_adjust_reason = $files_req_adjust_reason;
 
-      if ($files_require_adjustment) {
+      if ($files_req_adjust_date) {
           $m = new Moment($files_req_adjust_date);
           $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency
           $estimate->files_require_adjustment = $m->format('Y-m-d H:i:s');
