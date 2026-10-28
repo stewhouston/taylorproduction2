@@ -263,19 +263,12 @@ class Estimates extends Controller
       $estimate->drop_sell_adjust_reason = $ship_adjust_reason;
 
       // files req date; assume formatted by js
+      $estimate->files_require_adjustment = $files_req_adjust_date ?? null;
       $estimate->file_require_adjust_reason = $files_req_adjust_reason;
-
-      if ($files_req_adjust_date) {
-          $m = new Moment($files_req_adjust_date);
-          $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency
-          $estimate->files_require_adjustment = $m->format('Y-m-d H:i:s');
-      } else {
-        $estimate->files_require_adjustment = null;
-      }
 
       $estimate->adjustment_by = $request->user()->id;
       $m = new Moment();
-      $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency
+      // $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency @TODO confirm this is still relevant in 2026 on the new server
       $estimate->adjustment_date = $m->format('Y-m-d H:i:s');
 
       $estimate->estimate_comment = $estimate_comment;
