@@ -45,6 +45,48 @@
         }
     });
 
+    $('#btn-toggle-as-print-order').on('click', function(event) {
+      var $toggleBtn = $(this);
+      toggleMarkAsPrintOrder(event, $toggleBtn);
+    });
+
+    function toggleMarkAsPrintOrder(event, $toggleBtn) {
+    $toggleBtn.toggleClass('btn-default');
+    $toggleBtn.toggleClass('btn-warning'); // orange
+
+    // orange 'Print Order' header centered
+    $('.h-print-order').toggleClass('text-orange-600 text-3xl font-bold text-center hidden');
+    $('#taylor-button-nav-bar').toggleClass('nav-as-print-order');
+
+    w.estimate.isPrintOrder = !w.estimate.isPrintOrder;
+
+    if (w.estimate.isPrintOrder) {
+      $toggleBtn.text('Unmark as Print Order');
+    } else {
+      $toggleBtn.text('Mark as Print Order');
+    }
+
+    var printOrderValue = w.estimate.isPrintOrder ? 1 : 0;
+    persistPrintOrderState(printOrderValue);
+  }
+
+  function persistPrintOrderState(printOrderValue) {
+    var qs = 'is_print_order=' + printOrderValue;
+    $.ajax({
+      method: 'POST',
+      url: w.estimate.url + '/set_as_print_order?' + qs,
+      success: function(ok) {
+        console.log(arguments);
+
+        // toggleUserActionLinks();
+        // sendPrintOrderEmails();
+      },
+      error: function() {
+        console.error(arguments);
+      }
+    });
+  }
+
     $('#btn-add-document, #btn-close-add-document').on('click', function(event) {
         $('#add-document-menu').toggleClass('active');
     });

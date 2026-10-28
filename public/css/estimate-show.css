@@ -78,6 +78,14 @@
     pointer-events: auto;
 }
 
+#taylor-button-nav-bar.nav-as-print-order #list-toggle-rush-fee a,
+#taylor-button-nav-bar.nav-as-print-order #list-edit-estimate a,
+#taylor-button-nav-bar.nav-as-print-order #list-delete-estimate a,
+#taylor-button-nav-bar.nav-as-print-order #list-edit-shipping a,
+#taylor-button-nav-bar.nav-as-print-order #list-add-document a {
+    pointer-events: none;
+}
+
 .ui-datepicker-div, #ui-datepicker-div{
     z-index: 2147483647 !important;
 }

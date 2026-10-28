@@ -15,6 +15,7 @@ use App\Models\Shipto;
 use App\Services\EstimateService;
 use App\Services\ShippingService;
 use \Moment\Moment;
+use Illuminate\Http\JsonResponse;
 
 class Estimates extends Controller
 {
@@ -241,6 +242,22 @@ class Estimates extends Controller
     }
   }
 
+  public function ajaxSetAsPrintOrder(Request $request, $estimate_id): JsonResponse 
+  {
+    $estimate = Estimate::find($estimate_id);
+    $query = $request->all();
+    if (empty($query['is_print_order']) && intval($query['is_print_order']) !== 0) {
+      return new JsonResponse(['error' => '409/Must provide a `is_print_order` parameter with a value of either 0 or 1.'], 409);
+    }
+    elseif (intval($query['is_print_order']) === 1) {
+      $this->estimateService->markAsPrintOrder($estimate, $request->user());
+    }
+    elseif (intval($query['is_print_order']) === 0) {
+      $this->estimateService->unmarkAsPrintOrder($estimate, $request->user());
+    }
+    return new JsonResponse(['is_print_order' => intval($query['is_print_order'])], 200);
+  }
+
   public function ajaxSetOverrides(Request $request, $estimate_id) 
   {
       $price_adjust_reason = $request->input('priceAdjustReason');
@@ -268,6 +285,7 @@ class Estimates extends Controller
       $estimate->adjustment_by = $request->user()->id;
 
       if ($files_req_adjust_date) {
+          // Without this added step the date is 4 hours in the future, even with app/config.php set to America/New_York
           $m = new Moment($files_req_adjust_date);
           $estimate->files_require_adjustment = $m->format('Y-m-d H:i:s');
       } else {
@@ -275,7 +293,7 @@ class Estimates extends Controller
       }
 
       $m = new Moment();
-      $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency @TODO confirm this is still relevant in 2026 on the new server
+      $m->subtractHours(4); // PHP/SQL seem to have a 4 hour discrepency
       $estimate->adjustment_date = $m->format('Y-m-d H:i:s');
 
       $estimate->estimate_comment = $estimate_comment;

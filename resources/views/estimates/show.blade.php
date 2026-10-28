@@ -10,9 +10,13 @@
                 </div>
             </div>
             <div>
-                <button
-                    class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md border border-gray-300 transition-colors duration-150"
-                >Mark as Print Order</button>
+                <button id="btn-toggle-as-print-order"
+                    @if ($estimate->is_print_order)
+                    class="bg-orange-600 hover:bg-orange-500 active:bg-gray-300 text-white font-medium py-2 px-4 rounded-md border border-gray-300 transition-colors duration-150"
+                    @else
+                    class="bg-gray-100 hover:bg-gray-200 active:bg-gray-900 text-gray-800 font-medium py-2 px-4 rounded-md border border-gray-300 transition-colors duration-150"
+                    @endif
+                >{{ $estimate->is_print_order ? 'Unmark as Print Order' : 'Mark as Print Order' }}</button>
             </div>
         </div>
     </x-slot>
@@ -48,10 +52,10 @@
                         <li id="list-toggle-rush-fee" class="{{ $estimate->has_rush_fee ? 'active' : '' }}">
                             <a href="#" id="toggle-rush-fee"><i class="fa fa-bolt"></i> Rush Fee</a>
                         </li>
-                        <li>
+                        <li id="list-edit-estimate">
                             <a href="{{route('estimate.edit', $estimate->id)}}"><i class="fa fa-edit"></i> Edit Estimate</a>
                         </li>
-                        <li>
+                        <li id="list-delete-estimate">
                             <a id="btn-delete-estimate" href="{{route('estimate.destroy', $estimate->id)}}"><i class="fa fa-remove"></i> Delete</a>
                         </li>
                         <!--<li>
@@ -63,12 +67,12 @@
                         <li>
                             <a style="cursor: pointer;" onclick="window.open('{{ route("estimate.print", $estimate->id) }}','name','width=800,height=920'); return false;"><i class="fa fa-print"></i> Print</a>
                         </li>
-                        <li>
+                        <li id="list-edit-shipping">
                             <a href="{{route('shipping.drops', $estimate->id)}}" id="shipping-button">
                             <i class="fa fa-truck"></i> Shipping
                             </a>
                         </li>
-                        <li>
+                        <li id="list-add-document">
                             <a href="#"  id="btn-add-document">
                             <i class="fa fa-book"></i> Add Document
                             </a>
@@ -78,6 +82,9 @@
                 @endif
 
                 <div class="border-t border-solid border-gray-300 mt-4 pt-4">
+                    <div class="h-print-order {{ $estimate->is_print_order ? 'text-orange-600 text-3xl font-bold text-center' : 'hidden' }}">
+                        <span>Print Order</span>
+                    </div>
                     <div class="flex justify-between">
                         <div>
                             <div><span class="font-semibold">Number:</span> <span>{{$estimate->client_reference_number}}</span></div>

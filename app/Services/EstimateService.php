@@ -7,11 +7,14 @@ use App\Models\Estimate;
 use App\Models\Company;
 use App\Models\PricingRateSet;
 use App\Models\DropInstance;
+use App\Models\User;
+use App\Support\TaylorUtility;
 
 class EstimateService {
     protected $estimate;
 
-    public function __construct(Estimate $estimate) {
+    public function __construct(Estimate $estimate) 
+    {
       $this->estimate = $estimate;
     }
 
@@ -38,7 +41,8 @@ class EstimateService {
       return $estimate;
     }
 
-    public function update(Request $request, Estimate $estimate) {
+    public function update(Request $request, Estimate $estimate) 
+    {
       $this->estimate = $estimate;
       $data = array_merge($request->all(), [
         'created_by' => $request->user()->id,
@@ -48,8 +52,27 @@ class EstimateService {
       return $this->estimate->update($data);
     }
 
-    public function destroy($id) {
+    public function destroy($id) 
+    {
       DropInstance::where('estimate_id', $id)->delete();
       return $this->estimate->destroy($id);
     }
+
+    public function markAsPrintOrder(Estimate $estimate, User $user) 
+    {
+    $estimate->is_print_order = 1;
+    $estimate->print_order_token = TaylorUtility::makeToken();
+    $estimate->marked_print_order_at = new \DateTime();
+    $estimate->marked_print_order_by = $user->id;
+    $estimate->save();
+  }
+
+  public function unmarkAsPrintOrder(Estimate $estimate) 
+  {
+    $estimate->is_print_order = 0;
+    $estimate->print_order_token = "";
+    $estimate->marked_print_order_at = null;
+    $estimate->marked_print_order_by = null;
+    $estimate->save();
+  }
 }
