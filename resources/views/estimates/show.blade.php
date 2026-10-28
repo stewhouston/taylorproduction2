@@ -116,7 +116,7 @@
 
                 <div>
                     <div id="documents-container">
-                        <table class="w-full mt-4" cellpadding="4" cellspacing="4">
+                        <table class="w-full mt-4 cursor-default" cellpadding="4" cellspacing="4">
                         <thead>
                         <tr class="bg-gray-800 text-white ">
                             <!--<th></th>-->
@@ -279,9 +279,9 @@
                     </div><!--#debug-container-->
                 </div>
 
-                <h2 class="text-2xl my-4">Estimate Totals</h2>
+                <h2 class="text-2xl my-4 cursor-default">Estimate Totals</h2>
 
-                <table class="w-full">
+                <table class="w-full cursor-default" cellpadding="8" cellspacing="8">
                 <tbody>
                     <tr class="hover:bg-gray-100">
                         <td style="width:50%" class="font-semibold">Print Sub Total</td>
@@ -302,13 +302,13 @@
                     </td>
                 </tr>
                 <tr id="rush-fee-quote-row" style="display: {{ $estimate->has_rush_fee ? 'table-row' : 'none' }}"  class="hover:bg-gray-100">
-                    <td style="text-align: right;" class="pr-2">Rush Fee</td>
+                    <td style="text-align: right;" class="pr-2 text-yellow-800">Rush Fee</td>
                     <td>${{ number_format($curve_fields['Delivery_Rush_Fee_Dollars'], 2) }}</td>
                 </tr>
                 <tr class="hover:bg-gray-100">
                     <td style="width:50%" class="font-semibold">Print Total</td>
                     <td id="cell-print-total-value"
-                        style="vertical-align: top; padding-bottom: 30px;"
+                        style="vertical-align: top;"
                     >${{ number_format($costs['sub_total_with_rush_fee'], 2) }}</td>
                 </tr>
                 <tr class="hover:bg-gray-100">
@@ -343,7 +343,7 @@
                 </tr>
                 <tr class="hover:bg-gray-100">
                     <td class="font-semibold">Shipping Total</td>
-                    <td style="vertical-align: top; padding-bottom: 30px;"
+                    <td style="vertical-align: top;"
                     >
                         ${{ number_format($costs['shipping_cost'], 2) }}
                     </td>
