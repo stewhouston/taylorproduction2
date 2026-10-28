@@ -68,6 +68,20 @@
         $(this).closest('.cost-cell').find('.cost-details').toggle();
     });
 
+    // Production Details popout
+    $('.btn-production-details').click(function(event) {
+      event.preventDefault();
+
+      var $btn = $(event.target);
+      var documentId = $btn.data('document-id'),
+          estimateId = $btn.data('estimate-id');
+
+      var url = '/estimate/' + estimateId + '/document/' + documentId + '/production_details';
+      var windowName = 'production_details_' + documentId;
+
+      w.taylor1.launchPopout(url, windowName, {});
+    });
+
     $.estimateArchiveFeatherlight('#taylor-button-nav-bar', '#btn-archive-estimate', function(event, $btn) {
         event.preventDefault();
 

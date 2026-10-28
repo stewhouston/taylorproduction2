@@ -198,8 +198,7 @@
                                 </span>
                                 <span class="print-order-notifier" style="display: none; color: #999; font-style: italic;">Print Order</span>
                                 @if (request()->user()->hasPermissions('estimate_admin'))
-                                | <a class="btn btn-link btn-production-details"
-                                        style="padding:0;"
+                                | <a class="btn-production-details text-blue-800 p-0 underline cursor-pointer"
                                         data-document-id="{{$document->id}}"
                                         data-estimate-id="{{$document->estimate->id}}"
                                 >Production Details</a>
@@ -239,7 +238,7 @@
                                 <td colspan="3">&nbsp;</td>
                                 <td>
 
-                                    <a class="btn btn-link btn-production-details all"
+                                    <a class="btn-production-details all text-blue-800 underline cursor-pointer"
                                         style="padding:0;"
                                         data-document-id="all"
                                         data-estimate-id="{{$estimate->id}}"
