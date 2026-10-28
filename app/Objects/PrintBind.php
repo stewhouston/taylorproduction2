@@ -211,8 +211,6 @@ class PrintBind
     $pb_run_speed850=100;
     $pb_run_speed1200=50;
 
-    print_r(['$pb_cut_cover_hours pbRunHours' => $pb_cut_cover_hours]);
-
     $pb_minimum_run_hours = .78;
 
     if ($document_quantity < 200) {
@@ -260,17 +258,6 @@ class PrintBind
 
     $perfect_bind_cost_3 = $perfect_bind_cost_2 + round(($document_quantity * $pages / 5000 * $carton), 2);//add carton cost
 
-    print_r([
-      'fn' => 'perfectBindCost',
-      '$pages' => $pages,
-      '$pb_run_hours' => $pb_run_hours,
-      '$pb_cut_cover_hours' => $pb_cut_cover_hours,
-      '$document_quantity' => $document_quantity,
-      '$perfect_bind_cost_1' => $perfect_bind_cost_1,
-      '$perfect_bind_cost_2' => $perfect_bind_cost_2,
-      '$perfect_bind_cost_3' => $perfect_bind_cost_3
-    ]);
-
     $perfect_bind_cost = $perfect_bind_cost_3;
 
     return $perfect_bind_cost;
@@ -294,14 +281,6 @@ class PrintBind
     $taylor_markup_rate = $pricing['pb_taylor_mu'];
     $perfect_bind_sell += $glue_cost;
     $perfect_bind_sell = round($perfect_bind_sell * $taylor_markup_rate, 2);
-
-    print_r([
-      'fn' => 'perfectBindSell',
-      '$glue_cost' => $glue_cost,
-      '$document_quantity' => $document_quantity,
-      '$taylor_markup_rate' => $taylor_markup_rate,
-      '$perfect_bind_sell' => $perfect_bind_sell
-    ]);
 
     return $perfect_bind_sell;
   }

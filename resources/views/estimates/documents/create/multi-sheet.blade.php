@@ -12,7 +12,7 @@
             <input type="hidden" name="document_type_id" value="{{$document_type->id}}" />
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg px-6 py-4 border-t-4 border-blue-600">
 
-                <div class="text-xl font-semibold border-b border-gray-300 mb-4 pb-2">Document Details</div>
+                <h3 class="text-xl font-semibold border-b border-gray-300 mb-4 pb-2">Document Details</h3>
 
                 <div class="flex mb-4 items-center{{ $errors->has('size') ? ' has-error' : '' }}">
                     <label for="size" class="mr-4 font-semibold w-[220px]">Size *</label>
