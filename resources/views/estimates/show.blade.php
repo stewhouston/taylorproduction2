@@ -101,7 +101,7 @@
                             </span></div>
                             <div>
                             @if ($estimate->file_require_adjust_reason)
-                                <div style="color: #666; font-style: italic; font-size: 13px; margin-bottom: 4px; font-weight: bold;">
+                                <div style="color: #666; font-style: italic; margin-bottom: 4px; font-weight: bold;">
                                     {{ $estimate->file_require_adjust_reason }}
                                 </div>
                                 @else
@@ -308,7 +308,7 @@
                 <tr id="price-adjust-row" class="hover:bg-gray-100">
                     <td>
                         <div style="float: right;">Adjustment</div>
-                        <div style="padding-left: 60px; font-size: 13px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
+                        <div style="padding-left: 60px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
                             id="price-adjust-reason"
                         >
                             {{ $estimate->print_sell_adjust_reason }}
@@ -349,7 +349,7 @@
                 <tr id="shipping-adjust-row" class="hover:bg-gray-100">
                     <td>
                         <div style="float: right;">Adjustment</div>
-                        <div style="padding-left: 60px; font-size: 13px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
+                        <div style="padding-left: 60px; color: #666; font-style: italic; float: right; cursor: default; margin-right: 6px;"
                             id="shipping-adjust-reason"
                         >
                            {{ $estimate->drop_sell_adjust_reason }}
