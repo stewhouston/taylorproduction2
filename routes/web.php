@@ -34,9 +34,10 @@ Route::middleware([
     Route::post('/estimate/{id}/set_overrides', [Estimates::class, 'ajaxSetOverrides'])->name('estimate.ajaxSetOverrides');
     Route::post('/estimate/{id}/set_alerts', [Estimates::class, 'ajaxSetAlerts'])->name('estimate.ajaxSetAlerts');
     Route::post('/estimate/{id}/set_as_print_order', [Estimates::class, 'ajaxSetAsPrintOrder'])->name('estimate.ajaxSetAsPrintOrder');
-
+    
     Route::post('/estimate/{id}/document/store', [Documents::class, 'store'])->name('estimate.document.store');
     Route::delete('/estimate/{id}/document/delete', [Documents::class, 'delete'])->name('estimate.document.delete');
+    Route::post('/estimate/{id}/document/set_custom_parameters', [Documents::class, 'ajaxSetCustomParameters'])->name('estimate.document.ajaxSetCustomParameters');
     Route::get('/estimate/{id}/document/{document_id}/production_details', [Documents::class, 'productionDetails'])->name('estimate.document.production_details');
     foreach(['saddlestitch', 'digest-saddlestitch', 'folder', 'multi-sheet', 'perfect-bind', 'single-sheet', 'custom'] as $slug) {
         Route::get('/estimate/{id}/document/create/{type}', [Documents::class, 'create'])->name("estimates.documents.create.{$slug}");

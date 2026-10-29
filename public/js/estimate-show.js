@@ -87,7 +87,14 @@
     });
   }
 
+  $('.toggle-specification').on('click', function(event) {
+    event.preventDefault();
+    var $btn = $(event.target);
+    $btn.closest('td').find('.specification-embed-container').toggleClass('hidden');
+  });
+
     $('#btn-add-document, #btn-close-add-document').on('click', function(event) {
+        event.preventDefault();
         $('#add-document-menu').toggleClass('active');
     });
 

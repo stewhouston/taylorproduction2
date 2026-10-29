@@ -89,6 +89,7 @@
         });
 
         $adjustmentsLightbox.on('click', '.btn-cancel', function(event) {
+            event.preventDefault();
             $.featherlight.close();
         });
 

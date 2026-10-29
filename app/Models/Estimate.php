@@ -190,6 +190,11 @@ class Estimate extends Model
         $this->adjustment_date = null;
     }
 
+    public function hasDocuments() 
+    {
+        return !(empty($this->documents) || !is_object($this->documents) || $this->documents->count() === 0);
+    }
+
     public function hasPendingDocuments() 
     {
         if (!$this->hasDocuments()) return false;

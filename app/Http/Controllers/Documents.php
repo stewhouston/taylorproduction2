@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Laravel\Head\Facades\Head;
 use App\Services\DocumentService;
+use App\Services\EstimateService;
 use App\Models\Estimate;
 use App\Models\Document;
 use App\Models\DocumentType;
 use App\Models\DocumentTypeName;
 use App\Models\Curve;
+use App\Models\ProductionDocument;
+use App\Objects\PrintReport;
+use Illuminate\Http\JsonResponse;
 
 class Documents extends Controller
 {
@@ -53,7 +57,8 @@ class Documents extends Controller
         return redirect(route('estimate.show', $estimate_id));
     }
 
-    public function productionDetails(Request $request, int $estimate_id, $document_id) {
+    public function productionDetails(Request $request, int $estimate_id, $document_id) 
+    {
       $documents = [];
 
       if ($document_id === 'all') {
@@ -97,5 +102,77 @@ class Documents extends Controller
       );
 
       return view('estimates.documents.production_details', compact('estimate', 'documents', 'company', 'run_sheet_sizes'));
+  }
+
+  public function ajaxSetCustomParameters(Request $request, int $estimate_id) 
+  {
+    $data = $request->all();
+    $estimate = Estimate::find($estimate_id);
+    $document = Document::find($data['document_id']);
+    $approve = $request->input('approve') == "true";
+    $has_valid_params = (bool) 0;
+
+    if (!empty($data['type']) && !empty($data['size']) && !empty($data['finish'])
+      && floatval($data['weight']) !== 0 && floatval($data['sell_total']) !== 0
+      && floatval($data['sell_bind']) !== 0 && !empty($data['hour_range'])
+      && floatval($data['sell_print']) !== 0) {
+      $has_valid_params = true;
+    } else {
+      return new JsonResponse(['error' => 'Required field missing.'], 409);
+    }
+
+    if ($has_valid_params) {
+      $document->type = $data['type'];
+      $document->size = $data['size'];
+      $document->finish = $data['finish'];
+
+      $prod_doc = ProductionDocument::where('document_id', $document->id)->first();
+      $prod_doc_fields = [
+        'hour_range' => $data['hour_range'],
+        'hours' => $data['hour_range'],
+        'weight' => floatval($data['weight']),
+        'sell' => floatval($data['sell_total']),
+        'print_sell' => floatval($data['sell_print']),
+        'bind_sell' => floatval($data['sell_bind']),
+        'custom_description_1' => $data['custom_description_1'],
+        'custom_description_2' => $data['custom_description_2']
+      ];
+
+      if (empty($prod_doc)) {
+        $prod_doc = DocumentService::createProductionDocument($document, $prod_doc_fields);
+      }
+      else {
+        foreach($prod_doc_fields as $field => $value) {
+          $prod_doc->{$field} = $value;
+        }
+
+        $prod_doc->save();
+      }
+
+      $dtn = DocumentTypeName::where('short', $document->name)->get()->first();
+
+      $document->report_description = PrintReport::buildDocumentDescription($dtn->name, $document->description, $document->type, $document->size, $document->finish);
+
+      if ($approve) {
+        $document->is_pending = 0;
+      } else {
+        $document->is_pending = 1;
+      }
+
+      $document->last_modified_by = $request->user()->id;
+      $document->save();
+
+      if ($estimate->hasPendingDocuments() == false && $approve == true) {
+        $estimate->clearAlert(DocumentService::CUSTOM_DOCUMENT_PENDING_ALERT);
+      }
+      if ($approve == false) {
+        $estimate->addAlert(DocumentService::CUSTOM_DOCUMENT_PENDING_ALERT);
+      }
+      if ($approve) {
+        // EstimateService::sendCustomDocumentReviewedEmail($estimate, $document);
+        EstimateService::updateFilesReqDate($estimate_id);
+      }
+    }
+    return new JsonResponse($data, 200);
   }
 }

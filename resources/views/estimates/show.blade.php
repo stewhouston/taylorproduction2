@@ -156,8 +156,8 @@
                                 @endif
                                 {{$document->report_description}}
                                 @if (!empty($document->specification))
-                                <span style="font-size: 80%">(<a class="toggle-specification" href="#">Show User Specification</a>)</span>
-                                <pre class="specification-embed-container">{{ trim($document->specification) }}</pre>
+                                <span>(<a class="toggle-specification text-blue-800" href="#">Show User Specification</a>)</span>
+                                <pre class="specification-embed-container hidden">{{ trim($document->specification) }}</pre>
                                 @endif
                                 <div style="padding-left: 30px;">
                                     @foreach($document->components as $component)
@@ -169,16 +169,17 @@
                                     @if($document->production && $document->production->custom_description_2)
                                         <div>&bull; {{$document->production->custom_description_2}}</div>
                                     @endif
-                                        <div>&bull; Weight: {{ $document->production->weight ?? '0' }}lbs |
-                                        @if ($document->production && $document->production->weight)
+                                    <div>&bull; Weight: {{ $document->production->weight ?? '0' }}lbs |
+                                    @if ($document->production && $document->production->weight)
                                         {{ round($document->production->weight * 453.592, 0) }}g
-                                        @endif</div>
-                                    @if (request()->user()->hasPermissions('estimate_admin') && !empty($document->production))
-                                    <div>
-                                        Production Timing: {{ $document->production->hour_range}} hours
-                                        {!! $document->is_digital_only ? ' | <span class="estimate-tag-digital-only text-purple-700 italic">Digital Only</span>' : '' !!}
-                                    </div>
                                     @endif
+                                    </div>
+                                    <div>
+                                    @if (request()->user()->hasPermissions('estimate_admin') && !empty($document->production))
+                                        Production Timing: {{ $document->production->hour_range}} hours 
+                                    @endif
+                                    {!! $document->is_digital_only ? ' | <span class="estimate-tag-digital-only text-purple-700 italic">Digital Only</span>' : '' !!}
+                                    </div>
                                     @if (!empty($document->getDisplayMessages()))
                                     <div class="document-display-messages-container">
                                         @foreach ($document->getDisplayMessages() as $document_message)
@@ -209,7 +210,7 @@
                                 <input type="hidden" name="document_id" value="{{ $document->id }}" />
                                 <span class="user-action-controls" style="display: inline-block;">
                                 @if($document->is_custom && auth()->user()->isAdmin() && auth()->user()->hasPermissions('price_management'))
-                                    <a class="btn btn-link btn-set-custom-parameters" data-document-id="{{$document->id}}" style="font-weight: bold; padding: 0;">Estimate Detail</a> |
+                                    <a class="btn-set-custom-parameters text-blue-800 cursor-pointer font-bold underline" data-document-id="{{$document->id}}">Estimate Detail</a> |
                                 @endif
                                 <a type="button" class="btn-edit-estimate p-0 underline text-blue-800" href="#">
                                 Edit</a>
@@ -439,6 +440,7 @@
     </script>
     <script type="text/javascript" src="/js/estimate-show.js"></script>
     <script type="text/javascript" src="/js/estimate-adjust-lightbox.js"></script>
+    <script type="text/javascript" src="/js/estimate-custom-parameters.js"></script>
 
     @section('styles')
     @parent

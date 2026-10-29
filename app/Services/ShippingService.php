@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Shipto;
 use App\Models\StatHoliday;
+use App\Models\Estimate;
+use App\Models\DropInstance;
 use \Moment\Moment;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -35,4 +37,45 @@ class ShippingService {
     // $moment->setYear(0) idiom
     return intval($moment_instance->format('U')) < -62138;
   }
+
+  public static function getEarliestDeliveryDrop(Estimate $estimate): ?DropInstance {
+      if (empty($estimate->dropInstances) || $estimate->dropInstances->count() == 0) {
+        return null;
+      }
+      // far future date as default for simplified comparison below
+      $cmp_moment = new Moment('2999-01-01T00:00:00');
+      // $earliest_drop_instance;
+
+      foreach($estimate->dropInstances as $drop_instance) {
+        if (empty($drop_instance->delivery_date)) {
+          continue;
+        }
+
+        $instance_delivery_date = new Moment($drop_instance->delivery_date);
+
+        // Deliveries being shipped outside of the GTA require an extra day. Compensate here for comparison.
+        $delivery_is_far = (bool) !static::zoneIsGTA($drop_instance->shipto->zone);
+        if ($delivery_is_far) {
+          $instance_delivery_date->subtractDays(1);
+        }
+
+        $date_diff = $cmp_moment->from($instance_delivery_date);
+
+        if ($date_diff->getDirection() === "future" || ($delivery_is_far && $date_diff->getSeconds() <= 0)) {
+          $earliest_drop_instance = $drop_instance;
+          $cmp_moment = $instance_delivery_date;
+          // Log::info("ShippingService::getEarliestDeliveryDrop \$earliest_drop_instance->delivery_date = {$earliest_drop_instance->delivery_date}; \$cmp_moment = {$cmp_moment->format()}");
+        }
+      }
+
+      if (empty($earliest_drop_instance)) {
+        return null;
+      }
+
+      return $earliest_drop_instance;
+    }
+
+    public static function zoneIsGTA(string $zone):bool {
+      return (bool) preg_match('/^GTA/', $zone);
+    }
 }

@@ -9,6 +9,7 @@ use App\Models\PricingRateSet;
 use App\Models\DropInstance;
 use App\Models\User;
 use App\Support\TaylorUtility;
+use \Moment\Moment;
 
 class EstimateService {
     protected $estimate;
@@ -74,5 +75,137 @@ class EstimateService {
     $estimate->marked_print_order_at = null;
     $estimate->marked_print_order_by = null;
     $estimate->save();
+  }
+
+  public static function updateFilesReqDate(int $estimate_id) {
+    $estimate = Estimate::find($estimate_id);
+
+    if (empty($estimate->dropInstances)) {
+      return null;
+    }
+
+    $files_req_date = static::determineFilesReqDate($estimate_id);
+
+    // A drop may not exist or an error occurred somewhere
+    if (ShippingService::isEmptyMoment($files_req_date)) {
+      return null;
+    }
+    // An alert will be added to the estimate in conjunction to this (special requested case)
+    /* else if (self::hasPerfectBindDocument($estimate)) {
+        $estimate->files_required_by = null;
+
+        return $estimate->save();
+    } */
+    else {
+      $estimate->files_required_by = $files_req_date->format();
+
+      // Clear any custom set adjustments for the files required by field as a new one (more conservative) has been generated
+      $estimate->files_require_adjustment = null;
+      $estimate->file_require_adjust_reason = null;
+
+      return $estimate->save();
+    }
+  }
+
+  public static function determineFilesReqDate(int $estimate_id): Moment {
+    $estimate = Estimate::find($estimate_id);
+    $earliest_drop_instance = ShippingService::getEarliestDeliveryDrop($estimate);
+
+    if (empty($earliest_drop_instance)) {
+      $m = new Moment();
+      return $m->setYear(0); // null/false idiom
+    }
+
+    $earliest_drop_delivery_date = new Moment($earliest_drop_instance->delivery_date);
+    $earliest_drop_delivery_date->setImmutableMode(true);
+
+    if (ShippingService::zoneIsGTA($earliest_drop_instance->shipto->zone)) {
+      $ship_date = $earliest_drop_delivery_date;
+    }
+    else {
+      $ship_date = $earliest_drop_delivery_date->subtractDays(1);
+    }
+
+    $ship_date = $ship_date->setHour(0);
+
+    while (ShippingService::isStatHoliday($ship_date) || static::dateIsWeekend($ship_date)
+    //  || static::dateIsMonday($ship_date)
+    ) {
+      $ship_date = $ship_date->subtractDays(1);
+    }
+
+    $production_hours_total = $estimate->documents->reduce(function(float $acc, Document $document) {
+      $acc += $document->production->hours ?? 0;
+      return $acc;
+    }, 0);
+
+    $production_hours_total *= .75;
+    $production_hours_total = round($production_hours_total, 0);
+
+    // Log::info("\$ship_date = {$ship_date->format()}; \$production_hours_total = $production_hours_total");
+
+    $day_of_week = intval($ship_date->format('w'));
+
+    if ($production_hours_total <= 10) {
+      $file_req_date = $ship_date->subtractDays(1)->addHours(16);
+    }
+    elseif ($production_hours_total <= 16) {
+      $file_req_date = $ship_date->subtractDays(1)->addHours(16)
+          ->subtractHours($production_hours_total - 10);
+    }
+    elseif ($production_hours_total <= 28) {
+      $sub_days = ($day_of_week === 1 /* MONDAY */) ? 4 : 2;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16);
+    }
+    elseif ($production_hours_total <= 34) {
+      $sub_days = ($day_of_week === 1 /* MONDAY */) ? 4 : 2;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16)
+          ->subtractHours($production_hours_total - 28);
+    }
+    elseif ($production_hours_total <= 44) {
+      $sub_days = ($day_of_week <= 2 /* MONDAY|TUESDAY */) ? 5 : 3;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16);
+    }
+    elseif ($production_hours_total <= 50) {
+      $sub_days = ($day_of_week <= 2 /* MONDAY|TUESDAY */) ? 5 : 3;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16)
+          ->subtractHours($production_hours_total - 44);
+    }
+    elseif ($production_hours_total <= 56) {
+      $sub_days = ($day_of_week <= 3 /* MON-WEDNESDAY */) ? 6 : 4;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16);
+    }
+    elseif ($production_hours_total <= 62) {
+      $sub_days = ($day_of_week <= 3 /* MON-WEDNESDAY */) ? 6 : 4;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16)
+          ->subtractHours($production_hours_total - 56);
+    }
+    elseif ($production_hours_total <= 68) {
+      $sub_days = ($day_of_week <= 4 /* MON-THURSDAY */) ? 7 : 5;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16);
+    }
+    elseif ($production_hours_total <= 74) {
+      $sub_days = ($day_of_week <= 4 /* MON-THURSDAY */) ? 7 : 5;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16)
+          ->subtractHours($production_hours_total - 68);
+    }
+    elseif ($production_hours_total <= 82) {
+      $sub_days = ($day_of_week <= 5 /* MON-FRIDAY */) ? 8 : 6;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16);
+    }
+    elseif ($production_hours_total <= 88) {
+      $sub_days = ($day_of_week <= 5 /* MON-FRIDAY */) ? 8 : 6;
+      $file_req_date = $ship_date->subtractDays($sub_days)->addHours(16)
+          ->subtractHours($production_hours_total - 82);
+    }
+    elseif ($production_hours_total > 88) {
+      $file_req_date = $ship_date->subtractDays(8)->addHours(16);
+    }
+
+    while (ShippingService::isStatHoliday($file_req_date) || static::dateIsWeekend($file_req_date)) {
+      $file_req_date = $file_req_date->subtractDays(1);
+    }
+
+    return $file_req_date;
   }
 }
