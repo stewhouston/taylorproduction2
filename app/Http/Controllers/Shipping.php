@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Laravel\Head\Facades\Head;
 use App\Services\ShippingService;
 use App\Models\Estimate;
 use App\Models\Document;
@@ -24,6 +25,7 @@ class Shipping extends Controller
         $documents = Document::where('estimate_id', $estimate_id)->orderBy('created_at', 'ASC')->get();
         $request_user = $request->user();
         $is_estimate_admin = (bool) ($request_user->isAdmin() && $request_user->hasPermission('estimate_admin'));
+        Head::title("Shipping {$estimate->client_reference_number} #{$estimate->id} - Taylor-Demers Estimating");
 
         if ($estimate->company_id === $request_user->company->id || $is_estimate_admin) {
             $drop_instances = DropInstance::where('estimate_id', $estimate_id)->orderBy('created_at', 'asc')->get();

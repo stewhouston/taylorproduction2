@@ -104,7 +104,7 @@
         <td><div class="drop-n" style="color: #aaa; font-size: 16px; padding-left: 10px;">\
         <!-- val -->\
         </div></td>\
-        <td style="width: 100px"><a class="btn-expand-drop-documents bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md\
+        <td style="width: 120px"><a class="btn-expand-drop-documents bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md\
          border border-gray-300 transition-colors duration-150 cursor-pointer">Expand</a></td>\
         <td class="shipto-company-cell"><!-- val --></td>\
         <td class="shipto-city-cell" style="cursor: default;"><!-- val --></td>\
@@ -120,11 +120,12 @@
     </tr>\
     <tr class="drop-documents-row inactive" style="display: none;">\
         <td>&nbsp;</td>\
-        <td class="buttons-control-cell cell-align-top" style="width: 100px;">\
+        <td class="buttons-control-cell cell-align-top" style="width: 120px;">\
             ' + saveDropButtonHtml + '\
-            <div class="msg-errors" style="display: none; color: red; margin-top: 10px; cursor: default; font-size: 12px; font-style: italic;"></div>\
-            <div class="msg-success" style="display: none; color: green; cursor: default; font-size: 12px; margin-top: 10px; font-style: italic;"></div>\
-            <div class="msg-unsaved-changes" style="display: none; color: blue; cursor: default; margin-top: 10px; font-style: italic; font-size: 12px;" title="You have made changes to this drop that have not been saved yet">Unsaved Changes</div>\
+            <div class="msg-errors" style="display: none; color: red; margin-top: 10px; cursor: default; font-size: 12px; font-style: italic; margin-top: 58px"></div>\
+            <div class="msg-success" style="display: none; color: green; cursor: default; font-size: 12px; margin-top: 10px; font-style: italic; margin-top: 58px"></div>\
+            <div class="msg-unsaved-changes" style="display: none; color: blue; cursor: default; margin-top: 10px; font-style: italic; font-size: 12px; margin-top: 58px"\
+             title="You have made changes to this drop that have not been saved yet">Unsaved Changes</div>\
         </td>\
         <td colspan="6">\
             <table class="document-table-inline">\
@@ -180,7 +181,7 @@
       $dropRow.find('.drop-n').text(indx);
       $dropRow.find('.shipto-company-cell').text(shiptoDropDoc.company);
       if (shiptoDropDoc['uses_custom_addresses']) {
-        $dropRow.find('.shipto-city-cell').html('<a class="btn-set-custom-address" style="cursor: pointer;">Set Address</a>');
+        $dropRow.find('.shipto-city-cell').html('<a class="btn-set-custom-address text-blue-800 underline" style="cursor: pointer;">Set Address</a>');
       }
       else {
         $dropRow.find('.shipto-city-cell').text(shiptoDropDoc.city).attr('title', shiptoDropDoc['addr1'] + ', ' + shiptoDropDoc['prov_state'] + ', ' + shiptoDropDoc['postal_zip']);
@@ -239,13 +240,13 @@
       if ($document.is(':visible')) {
         $document.closest('tr').find('.msg-unsaved-changes').show();
 
-        if (!_.isFunction($._data(window).events.beforeunload)) {
+        //if (!_.isFunction($._data(window).events.beforeunload)) {
           jQuery(window).on('beforeunload.unsavedChanges', function() {
             if (!confirm('There are unsaved changes. Are you sure you want to leave this page?')) {
               return false;
             }
           });
-        }
+        //}
       }
     }
 
@@ -794,7 +795,7 @@
 
     $dropsAppTable.on('click', '.btn-set-custom-address', function(event) {
       var isNewDropInstance = false;
-      var saveDelay = $.toMilliseconds(0);
+      var saveDelay = 0;
       var $dropDocumentsRow = $(getShippingRow(event));
       var $dropShiptoRow = $dropDocumentsRow.next('tr.drop-documents-row');
       var shiptoId = $dropShiptoRow.data('shipto-id');
@@ -803,7 +804,7 @@
       var existingDropInstance = _.find(taylor.dropInstances, { id: dropInstanceId }) || {};
 
       // The Drop Instance record must exist for this function to work
-      if ($.isFalsy(dropInstanceId)) {
+      if (!dropInstanceId || dropInstanceId == 0) {
         console.debug('Drop instance record doesn\'t yet exist for item. Attempting creation...');
         shipping.saveAllDropInstances();
         isNewDropInstance = true;
@@ -811,12 +812,14 @@
       }
 
       var customAddress = new taylor.CustomAddress(existingDropInstance['custom_ship_address']);
-      var $addressOverlay = $(['<div style="max-width: 640px;">',
+      var $addressOverlay = $(['<div style="width: 640px;">',
         '<h3 style="background: #202a2f; color: #eee; margin-left: -25px; width: calc(100% + 50px); margin-top: -25px; padding: 16px 25px;">Set Custom Address</h3>',
         '<div class="custom-address-container" style="margin: 0 -12px;"></div>',
-        '<hr style="border-color: #93b3c3; clear: both;" />',
-        '<div style="margin-top: 10px;"><a class="btn btn-primary btn-save-address">Save</a>',
-        '<a style="float: right;" class="btn btn-cancel">Cancel</a></div>',
+        '<hr style="border-color: #93b3c3; clear: both; margin-top: 12px; padding-top: 12px;" />',
+        '<div style="margin-top: 10px;"><a class="btn-save-address bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md\
+         border border-gray-600 transition-colors duration-150 no-underline cursor-pointer">Save</a>',
+        '<a style="float: right;" class="btn-cancel bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4\
+         rounded-md border border-gray-300 transition-colors duration-150 cursor-pointer">Cancel</a></div>',
       '</div>'].join(''));
       $addressOverlay.find('.custom-address-container').append(customAddress.$form);
 
