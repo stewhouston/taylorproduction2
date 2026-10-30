@@ -30,6 +30,10 @@ class Document extends Model
         return $this->hasMany(Component::class);
     }
 
+    public function document_type() {
+      return $this->belongsTo(DocumentType::class);
+    }
+
     public function debug() 
     {
         return new DocumentDecoratorJson($this);

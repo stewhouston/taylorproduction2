@@ -36,6 +36,8 @@ Route::middleware([
     Route::post('/estimate/{id}/set_overrides', [Estimates::class, 'ajaxSetOverrides'])->name('estimate.ajaxSetOverrides');
     Route::post('/estimate/{id}/set_alerts', [Estimates::class, 'ajaxSetAlerts'])->name('estimate.ajaxSetAlerts');
     Route::post('/estimate/{id}/set_as_print_order', [Estimates::class, 'ajaxSetAsPrintOrder'])->name('estimate.ajaxSetAsPrintOrder');
+    Route::get('/estimate/{id}/change_active_rate_set', [Estimates::class, 'ajaxChangeActiveRateSet']);
+    Route::get('estimates/{id}/recalc_cost', [Documents::class, 'recalculateCost'])->name('estimate.documents.recalculateCost');
     
     Route::post('/estimate/{id}/document/store', [Documents::class, 'store'])->name('estimate.document.store');
     Route::delete('/estimate/{id}/document/delete', [Documents::class, 'delete'])->name('estimate.document.delete');

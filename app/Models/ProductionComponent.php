@@ -15,4 +15,18 @@ class ProductionComponent extends Model
     public function component() {
         return $this->belongsTo(Component::class, 'component_id');
     }
+
+  /**
+  *  Stew: Takes an unnormalized array of data and intersects it with all columns defined in the $fillables property. This is important as there are inconsistencies in variable/column names, e.g. 'text_cut_required' and 'cut_required' are incompatibility and will pitch errors until unified.
+  */
+  public function intersectFillables(array $data): array {
+    $row = [];
+    foreach($this->fillable as $column_name) {
+      if (empty($data[$column_name])) {
+        continue;
+      }
+      $row[$column_name] = $data[$column_name];
+    }
+    return $row;
+  }
 }

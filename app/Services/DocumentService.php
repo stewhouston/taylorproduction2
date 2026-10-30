@@ -9,6 +9,7 @@ use App\Models\DocumentTypeName;
 use App\Models\Curve;
 use App\Models\SellRate;
 use App\Models\ProductionDocument;
+use App\Models\ProductionComponent;
 use App\Objects\PrintBind;
 use App\Objects\PrintConfig;
 use App\Objects\PrintCost;
@@ -87,7 +88,57 @@ class DocumentService
       return $destroy;
   }
 
-  public static function createProductionDocument(Document $document, array $prod_doc_data): ProductionDocument {
+  public function update($request, int $id, array $opts = []): Document 
+  {
+    $opts = array_merge([
+      'active_rate_set_id' => null
+    ], $opts);
+
+    //try {
+      $this->document = Document::find($id);
+      $estimate_company_id = (int) $this->document->estimate->company_id;
+      $active_rate_set_id = $opts['active_rate_set_id'] ?? PricingRateSet::companyActive($estimate_company_id, 'id');
+
+      $attrs = [
+        'active_rate_set_id' => $active_rate_set_id,
+        'company_id' => $estimate_company_id,
+        'curve_fields' => Curve::getNamedMap($estimate_company_id)->toArray(),
+        'print_o_rates' => SellRate::getTypeRatesCollection('PrintOther', $active_rate_set_id),
+      ];
+
+      switch ($this->document->document_type->slug) {
+        case "single-sheet":
+          $document = $this->startSingleSheetUpdateLogic($request, $attrs);
+        break;
+        case "multi-sheet":
+          $document = $this->startMultiSheetUpdateLogic($request, $attrs);
+        break;
+        case "folder":
+          $document = $this->startFolderUpdateLogic($request, $attrs);
+        break;
+        case "custom":
+          if (!empty($opts['is_cost_recalc'])) {
+            // No systematic cost changes on custom documents as per the rate tables
+            $document = $this->document;
+          } else {
+            $document = $this->startCustomLogic($request, $attrs, $this->document->estimate);
+          }
+        break;
+        default: // "saddlestich" or "perfect-bind"
+          $document = $this->startBookUpdateLogic($request, $attrs);
+        break;
+      }
+    return $document;
+  }
+
+  protected function requestValue($request, string $field, $default = null) {
+    if ($request instanceof Request) return $request->input($field);
+    if (is_array($request)) return $request[$field] ?? $default;
+    return $default;
+  }
+
+  public static function createProductionDocument(Document $document, array $prod_doc_data): ProductionDocument 
+  {
     $defaults = [
       'print_hours' => 0,
       'print_cost' => 0,
@@ -118,6 +169,482 @@ class DocumentService
     $prod_doc = new ProductionDocument(array_merge($defaults, ['document_id' => $document->id], $prod_doc_data));
     $prod_doc->save();
     return $prod_doc;
+  }
+
+  protected function getBookComponent($type, $components) {
+    foreach($components as $comp) {
+      if ($comp->type == $type) return $comp;
+    }
+    return null;
+  }
+  
+  // Organizes component data for books (or non-books) following ad-hoc logic used in the Saddlestitch and Perfect Bind templates. Used now as a replacement for those as well as used in the price recalculation procedure.
+  public function getBookComponentValues(Document $document = null, $defaults = []): array {
+    $document = $document ?? $this->document;
+    $components = $document->components;
+    $defaults = array_merge([
+      'cover_stock' => 'none',
+      'print_side1' => 'none',
+      'print_side2' => 'none',
+      'bleed' => 0, // cover bleed
+      'text_stock' => null, // should always be populated
+      'text_print' => null, // should always be populated
+      'text_pages' => 0,
+      'text_bleed' => 0,
+      'is_sequential' => 0,
+      'count_color_inserts' => 0,
+      'count_imprints' => 0,
+    ], $defaults);
+
+    $is_not_book = (bool) in_array($document->type, ['Single Sheet', 'Multi Sheet', 'Folder']);
+
+    if ($document->is_custom) {
+      return $defaults; // @todo handle this if required in the future
+    }
+    else if ($is_not_book) {
+      $comp = $components->first();
+      return [
+        'text_stock' => $comp->stock,
+        'print_side1' => $comp->print_side1,
+        'print_side2' => $comp->print_side2,
+        'bleed' => $comp->bleed,
+        'text_pages' => $comp->pages
+      ];
+    }
+
+    if ($components->count() === 1) {
+      $comp = $components->first();
+      return array_merge($defaults, [
+        'text_stock' => $comp->stock,
+        'text_print' => $comp->print_side1,
+        'text_pages' => $comp->pages
+      ]);
+    }
+    // Custom documents
+    else if ($components->count() === 0) {
+      return array_merge($defaults, []);
+    }
+    else {
+      $comp1 = $this->getBookComponent('Cover', $components);
+      $comp2 = $this->getBookComponent('Text', $components);
+      $add_pages = !!in_array($document->finish, ['Saddlestitch', 'Perfect Bind']) ? 4 : 0;
+      if ($comp1->stock === '6 pg cover on 8pt Ctd Cover') {
+        $add_pages = 6;
+      }
+      return array_merge($defaults, [
+        'cover_stock' => $comp1->stock,
+        'print_side1' => $comp1->print_side1,
+        'print_side2' => $comp1->print_side2,
+        'bleed' => $comp1->bleed,
+        'text_stock' => $comp2->stock,
+        'text_print' => $comp2->print_side1,
+        'text_pages' => (intval($comp2->pages) + $add_pages),
+        'text_bleed' => 0,
+        'is_sequential' => $comp1->is_sequential ?: $comp2->is_sequential,
+        'count_color_inserts' => $comp2->count_color_inserts,
+        'count_imprints' => $comp1->count_imprints,
+      ]);
+    }
+  }
+
+  protected function startBookUpdateLogic($request, array $attrs = []): Document {
+    $all_request_fields = ($request instanceof Request) ? $request->all() : $request;
+    $size              = $this->requestValue($request, 'size');
+    $finish            = $this->requestValue($request, 'finish');
+    $quantity          = $this->requestValue($request, 'quantity');
+    $name              = $this->requestValue($request, 'name');
+    $description       = $this->requestValue($request, 'description');
+    $cover_type        = $this->requestValue($request, 'cover_type');
+    $cover_stock       = $this->requestValue($request, 'cover_stock');
+    $cover_print_side1 = $this->requestValue($request, 'print_side1');
+    $cover_print_side2 = $this->requestValue($request, 'print_side2');
+    $text_bleed        = $this->requestValue($request, 'text_bleed');
+    $bleed             = $this->requestValue($request, 'bleed');
+    $text_stock        = $this->requestValue($request, 'text_stock');
+    $print_side1       = $this->requestValue($request, 'text_print');
+    $print_side2       = $this->requestValue($request, 'text_print');
+    $count_imprints    = $this->requestValue($request, 'count_imprints');
+    $count_color_inserts = $this->requestValue($request, 'count_color_inserts');
+    $is_sequential     = (bool) json_decode($this->requestValue($request, 'is_sequential', '0'));
+    $is_digital_only   = (bool) json_decode($this->requestValue($request, 'is_digital_only', '0'));
+    $pages             = 0;
+    $data              = [];
+
+    // For new option `cover_type` = 'self', cover stock inherits from text detail.
+    if ($cover_type === 'self') {
+      $cover_stock = 'none';
+      $cover_print_side1 = 'none';
+      $cover_print_side2 = 'none';
+      $bleed = 0;
+    }
+    // Returns an Eloquent Collection object that represents a `component` row. Will be an empty Collection if no Cover exists for the given document.
+    $cover_component = $this->document->components()->where('type', 'Cover')->get();
+    $form_has_cover_component = (bool) ($cover_stock != 'none' && $cover_print_side1 != 'none');
+    // Determine Self Or Plus Cover
+    list($type, $component_count) = $this->getDocumentTypeAndComponentCount($cover_stock, $cover_print_side1);
+    // convert document type short name (e.g. 'MD&A' to full name)
+    $dtn = DocumentTypeName::where('short', $name)->get()->first();
+    $report_description = PrintReport::buildDocumentDescription($dtn->name, $description, $type, $size, $finish);
+    $document_user_meta = array(
+      'last_modified_by' => $request['user_id'] ?? $request->user()->id
+    );
+    $this->document->update(array_merge(
+      $all_request_fields,
+      $document_user_meta,
+      ['specification' => ''],
+      compact('cover_type', 'report_description', 'type', 'is_digital_only'),
+      ['active_rate_set_id' => $attrs['active_rate_set_id']]
+    ));
+    // if cover exists update (or delete) it
+    if ($cover_component->count() === 1) {
+      if ($cover_stock === 'none') {
+        $cover_component->first()->delete();
+        $data = [
+          'cover_cut_required'          => false,
+          'cover_run_sheets'            => 0,
+          'cover_component_weight'      => 0,
+          'cover_print_hours'           => 0,
+          'cover_print_cost'            => 0,
+          'cover_component_print_sell'  => 0
+        ];
+      } else {
+        $component_type = 'Cover';
+        $pages = !!($cover_stock === '6 pg cover on 8pt Ctd Cover') ? 6 : 4;
+        $component_report_description = PrintReport::buildComponentDescription(
+          $component_count, $component_type, $pages, $cover_print_side1, $cover_print_side2, $bleed, $cover_stock,
+          $is_sequential, $count_color_inserts, $count_imprints
+        );
+        $cover_component->first()->update([
+          'type'               => $component_type,
+          'print_side1'        => $cover_print_side1,
+          'print_side2'        => $cover_print_side2,
+          'bleed'              => $bleed,
+          'pages'              => $pages,
+          'stock'              => $cover_stock,
+          'report_description' => $component_report_description,
+          'count_imprints'     => $count_imprints,
+          'is_sequential'      => $is_sequential,
+        ]);
+        $data = $this->componentConfig(
+          $this->document, $cover_print_side1, $cover_print_side2, $size, $pages,
+          $finish, $component_type, $type, $quantity, $bleed, $cover_stock, $component_count,
+          $is_sequential, $count_imprints, 0, $attrs
+        );
+        $data['cover_cut_required']     = $data['cut_required'];
+        $data['cover_run_sheets']       = $data['run_sheets'];
+        $data['cover_component_weight'] = $data['component_weight'];
+        $data['cover_print_hours']      = $data['print_hours'];
+        $data['cover_print_cost']       = $data['print_cost'];
+        $component_count                = $data['document_component_count'];
+        $productionComponent[0] = $cover_component->first()->production;
+        $productionComponent[0]->update($data);
+        $cover_component_id = $cover_component->first()->id;
+      }
+    }
+    // Stew: a Cover was not created when the estimate was created, but a Cover has not been specified on the edit page.
+    // Create a new component row for the Cover.
+    elseif ($cover_component->count() === 0 && boolval($form_has_cover_component)) {
+      $document_fields = [
+        'size' => $size,
+        'finish' => $finish,
+        'type' => $type,
+        'quantity' => $quantity
+      ];
+      $component_fields = [
+        'type'           => 'Cover',
+        'print_side1'    => $cover_print_side1,
+        'print_side2'    => $cover_print_side2,
+        'bleed'          => $bleed,
+        'pages'          => $pages,
+        'stock'          => $cover_stock,
+        'count_imprints' => $count_imprints,
+        'is_sequential'  => $is_sequential,
+      ];
+      list($cover_component, $production_component, $data) = $this->createCoverComponent(
+        $this->document, $document_fields, $component_count, $component_fields, $attrs
+      );
+      $pages = 4;
+    }
+    // Non-existent cover
+    else {
+      $data['cover_cut_required'] = false;
+      $data['cover_run_sheets'] = 0;
+      $data['cover_component_weight'] = 0;
+      $data['cover_print_hours'] = 0;
+      $data['cover_print_cost'] = 0;
+      $data['cover_component_print_sell'] = 0;
+    }
+    // process text component
+    $component_type = 'Text';
+    $print_side1    = $all_request_fields['text_print'];
+    $print_side2    = $print_side1; //for books - text always duplex so s2 col = s1 col
+    $pages          = ($all_request_fields['text_pages'] - $pages); //text pages is pages less cover pages
+    /* Saddlestitch pages must be a multiple of 4. Perfet Bind text pages must be multiple of 2
+    * Check if multiple of 4 for Saddlestitch and if not, round up to next multiple of 4
+    * Check if multiple of 2 for Perfect bind text pages and if not, round up to next multiple of 2
+    */
+    $pages = PrintReport::applyPagesModuloBooks($finish, $pages);
+    $bleed = 0; // bleed not offered in version one for text of books
+    $text_component_o_fields = [
+      'count_imprints' => 0,
+      'is_sequential' => false,
+    ];
+    if (!$form_has_cover_component) {
+      $text_component_o_fields = [
+        'is_sequential' => $is_sequential,
+        'count_imprints' => $count_imprints,
+      ];
+    }
+    $component_report_description = PrintReport::buildComponentDescription(
+      $component_count, $component_type, $pages, $print_side1, $print_side2, $bleed, $text_stock,
+      $is_sequential, $count_color_inserts, $text_component_o_fields['count_imprints']
+    );
+    $text_component = $this->document->components()->where('type', 'Text')->get();
+    $text_component->first()->update(array_merge([
+      'type'               => $component_type,
+      'print_side1'        => $print_side1,
+      'print_side2'        => $print_side2,
+      'bleed'              => $bleed,
+      'pages'              => $pages,
+      'stock'              => $text_stock,
+      'report_description' => $component_report_description,
+      'count_color_inserts' => $count_color_inserts,
+    ], $text_component_o_fields));
+    // Takes all of the variables and calculates values for the `production_component` row.
+    $data2 = $this->componentConfig(
+      $this->document, $print_side1, $print_side2, $size, $pages, $finish, $component_type,
+      $type, $quantity, $bleed, $text_stock, $component_count, $text_component_o_fields['is_sequential'],
+      $text_component_o_fields['count_imprints'], $count_color_inserts, $attrs
+    );
+    // Include the new array the returned elements from the componentConfig first pass
+    $data = array_merge($data, $data2);
+    $production_component_row = (new ProductionComponent)->intersectFillables($data);
+    $text_component->first()->production()->update($production_component_row);
+    $documentData = $this->documentConfig(
+      $data['offline_bind_required'], $data['text_cut_required'], $data['cover_cut_required'],
+      $data['text_run_sheets'], $data['cover_run_sheets'], $finish, $quantity, $type, $pages,
+      $data['text_print_hours'], $data['cover_print_hours'], $data['text_print_cost'],
+      $data['cover_print_cost'], $data['text_component_print_sell'],
+      $data['cover_component_print_sell'], $data['text_component_weight'],
+      $data['cover_component_weight'], $data['run_sheet_sqin'], $data['product_sqin'], $attrs
+    );
+    $this->document->production()->first()->update($documentData);
+    $this->synchronizeAlertsAfterUpdate($this->document, $request);
+    return $this->document;
+  }
+
+  protected function startFolderUpdateLogic($request, $attrs = []): Document {
+    $all_request_fields = ($request instanceof Request)
+      ? $request->all() : $request;
+    $size            = $request['size'] ?? $request->input('size');
+    $finish          = $request['finish'] ?? $request->input('finish');
+    $quantity        = $request['quantity'] ?? $request->input('quantity');
+    $name            = $request['name'] ?? $request->input('name');
+    $description     = $request['description'] ?? $request->input('description');
+    $bleed           = $request['bleed'] ?? $request->input('bleed');
+    $stock           = $request['text_stock'] ?? $request->input('text_stock');
+    $print_side1     = $request['print_side1'] ?? $request->input('print_side1');
+    $print_side2     = $request['print_side2'] ?? $request->input('print_side2');
+    $pages           = 4;
+    $data            = [];
+    $type            = 'Folder';
+    $component_type  = 'Text';
+    $component_count = 1;
+    $is_digital_only = (bool) json_decode($request['is_digital_only'] ?? $request->input('is_digital_only') ?: '0');
+    // convert document type short name (e.g. 'MD&A' to full name)
+    $dtn = DocumentTypeName::where('short', $name)->get()->first();
+    // Determine Self Or Plus Cover
+    $report_description = PrintReport::buildDocumentDescription($dtn->name, $description, $type, $size, $finish);
+    $document_user_meta = [
+      'last_modified_by' => $request['user_id'] ?? $request->user()->id
+    ];
+    $this->document->update(array_merge(
+      $all_request_fields,
+      $document_user_meta,
+      ['specification' => ''],
+      compact('report_description', 'type', 'is_digital_only'),
+      ['active_rate_set_id' => $attrs['active_rate_set_id']]
+    ));
+    $component_report_description = PrintReport::buildComponentDescription(
+      $component_count, $component_type, $pages, $print_side1, $print_side2, $bleed, $stock
+    );
+    $component = $this->document->components->first();
+    $component->update([
+      'type'               => $component_type,
+      'print_side1'        => $print_side1,
+      'print_side2'        => $print_side2,
+      'bleed'              => $bleed,
+      'pages'              => $pages,
+      'stock'              => $stock,
+      'report_description' => $component_report_description,
+    ]);
+    $data = $this->componentConfig(
+      $this->document,
+      $print_side1, $print_side2, $size, $pages, $finish, $component_type, $type,
+      $quantity, $bleed, $stock, $component_count, 0, 0, 0, $attrs
+    );
+    $component->production->update($data);
+    $documentData = $this->documentConfig(
+      $data['offline_bind_required'], $data['text_cut_required'], $data['cover_cut_required'],
+      $data['text_run_sheets'], $data['cover_run_sheets'], $finish, $quantity, $type, $pages,
+      $data['text_print_hours'], $data['cover_print_hours'], $data['text_print_cost'],
+      $data['cover_print_cost'], $data['text_component_print_sell'], $data['cover_component_print_sell'],
+      $data['text_component_weight'], $data['cover_component_weight'], $data['run_sheet_sqin'],
+      $data['product_sqin'], $attrs
+    );
+    $this->document->production->update($documentData);
+    $this->synchronizeAlertsAfterUpdate($this->document, $request);
+    return $this->document;
+  }
+
+  protected function startMultiSheetUpdateLogic($request, array $attrs = []): Document {
+    $all_request_fields = ($request instanceof Request)
+      ? $request->all() : $request;
+    $size            = $request['size'] ?? $request->input('size');
+    $finish          = $request['finish'] ?? $request->input('finish');
+    $quantity        = $request['quantity'] ?? $request->input('quantity');
+    $name            = $request['name'] ?? $request->input('name');
+    $description     = $request['description'] ?? $request->input('description');
+    $bleed           = $request['bleed'] ?? $request->input('bleed');
+    $stock           = $request['text_stock'] ?? $request->input('text_stock');
+    $print_side1     = $request['print_side1'] ?? $request->input('print_side1');
+    $print_side2     = $request['print_side2'] ?? $request->input('print_side2');
+    $pages           = $request['text_pages'] ?? $request->input('text_pages');
+    $data            = [];
+    $type            = 'Multi Sheet';
+    $component_type  = 'Text';
+    $component_count = 1;
+    $is_digital_only = (bool) json_decode($request['is_digital_only'] ?? $request->input('is_digital_only') ?: '0');
+    /**
+    * Check if both sides print. if so pages must be even number. Check and adjust if not even
+    * @todo this might need to go in function..we put similar function for books in report description
+    */
+    if ($print_side1 !== 'none' && $print_side2 !== 'none') {
+      $mod = ($pages % 2);
+      if ($mod > 0) {
+        $pages += 1;
+      }
+    }
+    // convert document type short name (e.g. 'MD&A' to full name)
+    $dtn = DocumentTypeName::where('short', $name)->get()->first();
+    // Determine Self Or Plus Cover
+    $report_description = PrintReport::buildDocumentDescription($dtn->name, $description, $type, $size, $finish);
+    $document_user_meta = [
+      'last_modified_by' => $request['user_id'] ?? $request->user()->id
+    ];
+    $this->document->update(array_merge(
+      $all_request_fields,
+      $document_user_meta,
+      ['specification' => ''],
+      compact('report_description', 'type', 'is_digital_only'),
+      ['active_rate_set_id' => $attrs['active_rate_set_id']]
+    ));
+    $component_report_description = PrintReport::buildComponentDescription(
+      $component_count, $component_type, $pages, $print_side1, $print_side2, $bleed, $stock
+    );
+    $component = $this->document->components->first();
+    $component->update([
+      'type'               => $component_type,
+      'print_side1'        => $print_side1,
+      'print_side2'        => $print_side2,
+      'bleed'              => $bleed,
+      'pages'              => $pages,
+      'stock'              => $stock,
+      'report_description' => $component_report_description,
+    ]);
+    $data = $this->componentConfig(
+      $this->document,
+      $print_side1, $print_side2, $size, $pages, $finish, $component_type, $type,
+      $quantity, $bleed, $stock, $component_count, 0, 0, 0, $attrs
+    );
+    $component->production->update($data);
+    $data['cover_cut_required']     = 0;
+    $data['cover_run_sheets']       = 0;
+    $data['cover_component_weight'] = 0;
+    $data['cover_print_hours']      = 0;
+    $data['cover_print_cost']       = 0;
+    $component_count                = 1;
+    $documentData = $this->documentConfig(
+      $data['offline_bind_required'], $data['text_cut_required'], $data['cover_cut_required'],
+      $data['text_run_sheets'], $data['cover_run_sheets'], $finish, $quantity, $type, $pages,
+      $data['text_print_hours'], $data['cover_print_hours'], $data['text_print_cost'],
+      $data['cover_print_cost'], $data['text_component_print_sell'], $data['cover_component_print_sell'],
+      $data['text_component_weight'], $data['cover_component_weight'], $data['run_sheet_sqin'],
+      $data['product_sqin'], $attrs
+    );
+    $this->document->production->update($documentData);
+    $this->synchronizeAlertsAfterUpdate($this->document, $request);
+    return $this->document;
+  }
+
+  protected function startSingleSheetUpdateLogic($request, array $attrs = []): Document {
+    $all_request_fields = ($request instanceof Request)
+      ? $request->all() : $request;
+    $size              = $request['size'] ?? $request->input('size');
+    $finish            = $request['finish'] ?? $request->input('finish');
+    $quantity          = $request['quantity'] ?? $request->input('quantity');
+    $name              = $request['name'] ?? $request->input('name');
+    $description       = $request['description'] ?? $request->input('description');
+    $bleed             = $request['bleed'] ?? $request->input('bleed');
+    $stock             = $request['text_stock'] ?? $request->input('text_stock');
+    $print_side1       = $request['print_side1'] ?? $request->input('print_side1');
+    $print_side2       = $request['print_side2'] ?? $request->input('print_side2');
+    $data              = [];
+    $type              = 'Single Sheet';
+    $component_type    = 'Text';
+    $component_count   = 1;
+    $is_digital_only   = (bool) json_decode($request['is_digital_only'] ?? $request->input('is_digital_only') ?: '0');
+
+    // convert document type short name (e.g. 'MD&A' to full name)
+    $dtn = DocumentTypeName::where('short', $name)->get()->first();
+    // Determine Self Or Plus Cover
+    $report_description = PrintReport::buildDocumentDescription($dtn->name, $description, $type, $size, $finish);
+    $document_user_meta = array(
+      'last_modified_by' => $request['user_id'] ?? $request->user()->id
+    );
+    $this->document->update(array_merge(
+      $all_request_fields,
+      $document_user_meta,
+      ['specification' => ''],
+      compact('report_description', 'type', 'is_digital_only'),
+      ['active_rate_set_id' => $attrs['active_rate_set_id']]
+    ));
+    $pages = ($print_side2 == 'none') ? 1 : 2;
+    $component_report_description = PrintReport::buildComponentDescription(
+      $component_count, $component_type, $pages, $print_side1, $print_side2, $bleed, $stock
+    );
+    $component = $this->document->components->first();
+    $component->update([
+      'type'               => $component_type,
+      'print_side1'        => $print_side1,
+      'print_side2'        => $print_side2,
+      'bleed'              => $bleed,
+      'pages'              => $pages,
+      'stock'              => $stock,
+      'report_description' => $component_report_description,
+    ]);
+    $data = $this->componentConfig(
+      $this->document, $print_side1, $print_side2, $size, $pages, $finish, $component_type,
+      $type, $quantity, $bleed, $stock, $component_count, 0, 0, 0, $attrs
+    );
+    $component->production->update($data);
+    $data['cover_cut_required']     = 0;
+    $data['cover_run_sheets']       = 0;
+    $data['cover_component_weight'] = 0;
+    $data['cover_print_hours']      = 0;
+    $data['cover_print_cost']       = 0;
+    $component_count                = 1;
+    $documentData = $this->documentConfig(
+      $data['offline_bind_required'], $data['text_cut_required'], $data['cover_cut_required'],
+      $data['text_run_sheets'], $data['cover_run_sheets'], $finish, $quantity, $type, $pages,
+      $data['text_print_hours'], $data['cover_print_hours'], $data['text_print_cost'],
+      $data['cover_print_cost'], $data['text_component_print_sell'], $data['cover_component_print_sell'],
+      $data['text_component_weight'], $data['cover_component_weight'], $data['run_sheet_sqin'],
+      $data['product_sqin'], $attrs
+    );
+    $this->document->production->update($documentData);
+    $this->synchronizeAlertsAfterUpdate($this->document, $request);
+    return $this->document;
   }
 
   protected function startCustomLogic($request, $attrs = [], $estimate): Document 
@@ -756,5 +1283,24 @@ class DocumentService
     );
   }
 
+  // The `production_document` for a given document as it existed before any changes occurred.
+  private function getOriginalProductionDocument($request) {
+    $serialized = $request['original_production_document'] ?? $request->input('original_production_document');
+    try {
+      return unserialize($serialized);
+    }
+    catch(\Exception $e) {
+      return [];
+    }
+  }
 
+  // The $updated_document data isn't correct; not reflecting changes that occurred before this method was invoked...
+  protected function synchronizeAlertsAfterUpdate($document, $request) {
+    $estimate = Estimate::find($document->estimate_id);
+    $original_document_production_weight = $this->getOriginalProductionDocument($request);
+    $weight_did_change = $document->production->weight != $original_document_production_weight['weight'];
+    if ($estimate->uses_custom_addresses && $weight_did_change) {
+      ShippingService::addCustomShippingPendingAlert($estimate);
+    }
+  }
 }

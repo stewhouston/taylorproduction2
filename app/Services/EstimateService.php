@@ -79,6 +79,17 @@ class EstimateService {
     $estimate->save();
   }
 
+  public function updateActiveRateSet(Estimate $estimate, PricingRateSet $rate_set) 
+  {
+    $estimate->active_rate_set_id = $rate_set->id;
+    foreach($estimate->documents as $document) {
+      $document->active_rate_set_id = $rate_set->id;
+      $document->save();
+    }
+    $estimate->save();
+    return true;
+  }
+
   public static function evaluateEstimateAlerts(Estimate $estimate) 
   {
     if ($estimate->hasAdjustments() || $estimate->adjust_count >= 1) {

@@ -182,6 +182,24 @@ class Estimates extends Controller
         return view('estimates.print', compact('estimate', 'costs', 'has_file_req_adjustment', 'uses_inactive_rate_set'));
     }
 
+    public function ajaxChangeActiveRateSet(Request $request, int $estimate_id) 
+    {
+        $estimate = Estimate::find($estimate_id);
+        $rate_set_id = intval($request->input('rate_set_id'));
+        $rate_set = PricingRateSet::find($rate_set_id);
+
+        if ($rate_set_id === 0 || empty($rate_set)) {
+        return new JsonResponse(['error' => '409/No row found for specified `rate_set_id`'], 409);
+        }
+
+        if ($this->estimateService->updateActiveRateSet($estimate, $rate_set)) {
+            $recalc_url = route('estimate.documents.recalculateCost', $estimate->id) . "?rate_set_id=$rate_set_id";
+            return new JsonResponse(['doRecalcUrl' => $recalc_url], 200);
+        } else {
+            return new JsonResponse(['error' => '409/Failed to change active rate set.'], 409);
+        }
+    }
+
     public function ajaxSetRushFee(Request $request, int $estimate_id) {
         $estimate = Estimate::find($estimate_id);
 

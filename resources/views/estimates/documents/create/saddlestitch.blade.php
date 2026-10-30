@@ -58,8 +58,8 @@
                 <div class="flex mb-4 items-center{{ $errors->has('name') ? ' has-error' : '' }}">
                 <label for="name" class="mr-4 font-semibold w-[220px]">Name *</label>
                 <div class="col-sm-9">
-                    <select required id="name" name="name" class="form-control">
-                    <option value="">Select</option>
+                    <select required id="name" name="name" class="w-[500px]">
+                    <option value=""></option>
                     @foreach($document_type_names as $dtname)
                     <option value="{{ $dtname->short }}">{{ $dtname->name }}</option>
                     @endforeach
@@ -75,7 +75,7 @@
                 <div class="flex mb-4 items-center{{ $errors->has('description') ? ' has-error' : '' }}">
                 <label for="description" class="mr-4 font-semibold w-[220px]">Description</label>
                 <div class="col-sm-9">
-                    <input id="description" name="description" type="text" class="w-[400px]" value="{{ old('description') }}">
+                    <input id="description" name="description" type="text" class="w-[500px]" value="{{ old('description') }}">
                     @if ($errors->has('description'))
                     <span class="help-block">
                     <strong>{{ $errors->first('description') }}</strong>

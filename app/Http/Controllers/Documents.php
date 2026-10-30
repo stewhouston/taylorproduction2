@@ -104,6 +104,36 @@ class Documents extends Controller
       return view('estimates.documents.production_details', compact('estimate', 'documents', 'company', 'run_sheet_sizes'));
   }
 
+  public function recalculateCost(Request $request, $estimate_id) {
+    $estimate = Estimate::find($estimate_id);
+    $rate_set_id = intval($request->input('rate_set_id'));
+    $rate_set_id = ($rate_set_id === 0) ? null : $rate_set_id;
+
+    foreach($estimate->documents as $document) {
+      $request_fields = array_merge(
+        $document->toArray(),
+        $this->documentService->getBookComponentValues($document)
+      );
+
+      unset($request_fields['id']);
+      $request_fields['user_id'] = $request->user()->id;
+
+      $prod_doc = $document->production()->first();
+
+      $request_fields['original_production_document'] = (empty($prod_doc))
+        ? [] : serialize($prod_doc->toArray());
+
+      // Invoke update procedure
+      $document = $this->documentService->update($request_fields, $document->id, [
+        'active_rate_set_id' => $rate_set_id,
+        'is_cost_recalc' => true
+      ]);
+    }
+
+    //return 'OK';
+    return redirect(route('estimate.show', $estimate_id));
+  }
+
   public function ajaxSetCustomParameters(Request $request, int $estimate_id) 
   {
     $data = $request->all();

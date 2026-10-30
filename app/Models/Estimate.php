@@ -84,9 +84,19 @@ class Estimate extends Model
       }
       $last_modified_by_user = User::find($last_modified_user_id);
       if (empty($last_modified_by_user) || !is_object($last_modified_by_user)) {
-        return '—';
+        return 'Unknown';
       }
       return $last_modified_by_user->name;
+    }
+
+    public function getShipLastModifiedAt(): string {
+      if (empty($this->dropInstances) || $this->dropInstances->count() === 0) {
+        return '';
+      }
+
+      $last_modified_at = $this->dropInstances->sortByDesc('updated_directly_at')->first()->updated_directly_at;
+
+      return $last_modified_at;
     }
 
     public function getLastModifiedAt() {

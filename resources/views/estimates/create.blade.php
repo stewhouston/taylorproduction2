@@ -53,7 +53,7 @@
                         <div class="flex mb-4 items-center">
                             <label for="cusip" class="mr-4 font-semibold w-[180px]">CUSIP</label>
                             <div class="col-sm-9">
-                                <input id="cusip" name="cusip" type="text" class="w-[400px]" />
+                                <input id="cusip" name="cusip" type="text" class="w-[400px]" required />
                             </div>
                         </div>
 

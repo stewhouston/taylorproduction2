@@ -222,6 +222,47 @@
     toggleDeliveryInstancesDisplay();
   });
 
+  $('.btn-toggle-change-rate-set').on('click', function(event) {
+    var $toggleBtn = $(event.currentTarget);
+    var $applyBtn = $('#btn-save-changed-rate-set');
+    var $rateSetChooser = $('#active-rate-set-chooser');
+    var $rateSetDisplayName = $('#active-rate-set-display-name');
+
+    if ($rateSetChooser.is(':visible')) {
+      $rateSetChooser.hide();
+      $applyBtn.hide();
+      $rateSetDisplayName.show();
+      $toggleBtn.text('Change');
+    } else {
+      $rateSetChooser.show();
+      $applyBtn.show();
+      $rateSetDisplayName.hide();
+      $toggleBtn.text('Cancel');
+    }
+  });
+
+  $('#btn-save-changed-rate-set').on('click', function(event) {
+    var $rateSetChooser = $('#active-rate-set-chooser');
+    var rateSetId = $rateSetChooser.val();
+
+    if (!rateSetId) return;
+
+    $.ajax({
+      method: 'GET',
+      url: '/estimate/' + taylor.estimate.id + '/change_active_rate_set?rate_set_id=' + rateSetId,
+      success: function(response) {
+        if (response && response.doRecalcUrl) {
+          return (location.href = response.doRecalcUrl);
+        } else {
+          alert("Received response: " + JSON.stringify(response));
+        }
+      },
+      error: function(response) {
+        console.error('$.ajax err', response);
+      }
+    });
+  });
+
   function populateDropInstances() {
     _.each(w.taylor.dropInstances, function(dropInstance) {
       var shipto = _.find(taylor.shiptos, { id: dropInstance.shipto_id }) || {};

@@ -25,20 +25,22 @@
         <div class="lg:px-8 xl:w-full xl:mx-4 2xl:max-w-[80%] 2xl:mx-auto">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg py-4 px-6">
 
-                <div id="archived-estimate-message" class="text-center bg-yellow-100 border border-yellow-800 py-2 rounded-md mb-2" style="display: {{ $estimate->is_archived ? 'block' : 'none' }};">
-                    This estimate is archived. <strong>Status:</strong> <span id="archived-estimate-status">{{ ucfirst($estimate->status) }}</span>
-                </div>
-
-                @if ($estimate->estimate_comment)
-                    <div class="bg-blue-100 border border-blue-800 p-2 mb-2 rounded-md" style="font-style: italic;"><strong>Comment:</strong> {{ $estimate->estimate_comment }}</div>
-                @endif
-
-                <div id="estimate-alerts-message" class="bg-red-100 border border-red-800 py-2 px-4 rounded-md mb-2" style="display: {{ $estimate->has_alert && $estimate->alerts ? 'block' : 'none' }};">
-                    <strong>Alerts ({{ count($estimate->getAlerts()) }}):</strong>
-                    @foreach ($estimate->getAlerts() as $alert_msg)
-                        {{ $alert_msg }}<br />
+                @if (auth()->user()->isAdmin() && auth()->user()->hasPermissions('price_management'))
+                <h4 class="mb-2" style="border: 1px solid hsl(229, 71%, 42%); border-left: 4px solid hsl(229, 71%, 42%); padding: 8px; background: hsl(240, 70%, 96%);">
+                    <span>Estimate Rates: </span>
+                    <span id="active-rate-set-display-name"><strong>{{ $est_active_rate_set->name }}</strong></span>
+                    <select id="active-rate-set-chooser" style="display: none;">
+                    <option value="{{ $est_active_rate_set->id }}" selected>{{ $est_active_rate_set->company->name }}: {{ $est_active_rate_set->name }}</option>
+                    <option></option>
+                    @foreach ($all_rate_sets as $rate_set)
+                        <option value="{{ $rate_set->id }}">{{ $rate_set->company->name }}: {{ $rate_set->name }}</option>
                     @endforeach
-                </div>
+                    </select>
+                    <button id="btn-save-changed-rate-set" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150 no-underline" style="display: none;">Apply</button>
+                    <a class="btn-toggle-change-rate-set bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2
+                     px-4 rounded-md border border-gray-300 transition-colors duration-150 cursor-pointer">Change</a><br />
+                </h4>
+                @endif
 
                 @if (!auth()->user()->isReadOnly())
                     <section class="content-header">
@@ -81,6 +83,21 @@
                     </section>
                 @endif
 
+                <div id="archived-estimate-message" class="text-center bg-yellow-100 border border-yellow-800 py-2 rounded-md mb-2" style="display: {{ $estimate->is_archived ? 'block' : 'none' }};">
+                    This estimate is archived. <strong>Status:</strong> <span id="archived-estimate-status">{{ ucfirst($estimate->status) }}</span>
+                </div>
+
+                @if ($estimate->estimate_comment)
+                    <div class="bg-blue-100 border border-blue-800 p-2 mb-2 rounded-md" style="font-style: italic;"><strong>Comment:</strong> {{ $estimate->estimate_comment }}</div>
+                @endif
+
+                <div id="estimate-alerts-message" class="bg-red-100 border border-red-800 py-2 px-4 rounded-md mb-2" style="display: {{ $estimate->has_alert && $estimate->alerts ? 'block' : 'none' }};">
+                    <strong>Alerts ({{ count($estimate->getAlerts()) }}):</strong>
+                    @foreach ($estimate->getAlerts() as $alert_msg)
+                        {{ $alert_msg }}<br />
+                    @endforeach
+                </div>
+
                 <div class="border-t border-solid border-gray-300 mt-4 pt-4">
                     <div class="h-print-order {{ $estimate->is_print_order ? 'text-orange-600 text-3xl font-bold text-center' : 'hidden' }}">
                         <span>Print Order</span>
@@ -113,14 +130,21 @@
                         </div>
                         <div>
                             <div><span class="font-semibold">Created By:</span> 
-                            @if ($estimate->createdBy)
-                                {{ $estimate->createdBy->name }}
-                            @endif
+                                {{ $estimate->createdBy->name ?? 'Unknown' }}
                             </div>
-                            <div><span class="font-semibold">Estimate Last Modified By:</span> {{ $estimate->getLastModifiedBy() }}</div>
-                            <div><span class="font-semibold">Shipping Last Modified By:</span> {{ $estimate->getShipLastModifiedBy() }}</div>
+                            <div>
+                                <span class="font-semibold">Estimate Last Modified By:</span> {{ $estimate->getLastModifiedBy() }}
+                                <time style="display: inline; font-size: 13px;" class="timeago" datetime="{{ $estimate->getLastModifiedAt() }}" title="{{ $estimate->getLastModifiedAt() }}"></time>
+                            </div>
+                            <div>
+                                <span class="font-semibold">Shipping Last Modified By:</span> {{ $estimate->getShipLastModifiedBy() }}
+                                <time style="display: inline; font-size: 13px;" class="timeago" datetime="{{ $estimate->getShipLastModifiedAt() }}" title="{{ $estimate->getShipLastModifiedAt() }}"></time>
+                            </div>
                             @if ($estimate->adjustment_by)
-                            <div><span class="font-semibold">Adjustments Last Modified By:</span> {{ $estimate->getAdjustLastModifiedBy() }}</div>
+                            <div>
+                                <span class="font-semibold">Adjustments Last Modified By:</span> {{ $estimate->getAdjustLastModifiedBy() }}
+                                <time style="display: inline; font-size: 13px;" class="timeago" datetime="{{ $estimate->getAdjustLastModifiedAt() }}" title="{{ $estimate->getAdjustLastModifiedAt() }}"></time>
+                            </div>
                             @endif
                         </div>
                     </div>
