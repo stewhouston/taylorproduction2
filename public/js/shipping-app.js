@@ -813,7 +813,7 @@
 
       var customAddress = new taylor.CustomAddress(existingDropInstance['custom_ship_address']);
       var $addressOverlay = $(['<div style="width: 640px;">',
-        '<h3 style="background: #202a2f; color: #eee; margin-left: -25px; width: calc(100% + 50px); margin-top: -25px; padding: 16px 25px;">Set Custom Address</h3>',
+        '<h3 style="background: #202a2f; color: #eee; margin-left: -25px; width: calc(100% + 50px); margin-top: -25px; padding: 16px 25px; font-weight: bold; font-size: 1.3rem;">Set Custom Address</h3>',
         '<div class="custom-address-container" style="margin: 0 -12px;"></div>',
         '<hr style="border-color: #93b3c3; clear: both; margin-top: 12px; padding-top: 12px;" />',
         '<div style="margin-top: 10px;"><a class="btn-save-address bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md\

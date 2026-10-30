@@ -52,6 +52,12 @@
                 </header>
             @endif
 
+            @if (session('danger'))
+                <div class="bg-red-500 text-white text-center p-3 font-semibold">
+                    {{ session('danger') }}
+                </div>
+            @endif
+
             <!-- Page Content -->
             <main class="relative">
                 {{ $slot }}
