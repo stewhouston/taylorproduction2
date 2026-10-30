@@ -118,7 +118,7 @@
                             @endif
                             </div>
                             <div><span class="font-semibold">Estimate Last Modified By:</span> {{ $estimate->getLastModifiedBy() }}</div>
-                            <div><span class="font-semibold">Shipping Last Modified By:</span> todo</div>
+                            <div><span class="font-semibold">Shipping Last Modified By:</span> {{ $estimate->getShipLastModifiedBy() }}</div>
                             @if ($estimate->adjustment_by)
                             <div><span class="font-semibold">Adjustments Last Modified By:</span> {{ $estimate->getAdjustLastModifiedBy() }}</div>
                             @endif
