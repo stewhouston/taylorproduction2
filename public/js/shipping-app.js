@@ -130,11 +130,11 @@
             <table class="document-table-inline">\
                 <thead>\
                     <th>&nbsp;</th>\
-                    <th>Document</th>\
-                    <th>Description</th>\
-                    <th>Ship Qty</th>\
-                    <th style="text-align: center;">Available</th>\
-                    <th style="text-align: center;">Print Qty</th>\
+                    <th class="text-left">Document</th>\
+                    <th class="text-left">Description</th>\
+                    <th class="text-left">Ship Qty</th>\
+                    <th>Available</th>\
+                    <th>Print Qty</th>\
                     <th style="width: 30px;">&nbsp;</th>\
                 </thead>\
                 <tbody>\
