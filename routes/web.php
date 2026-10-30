@@ -43,7 +43,19 @@ Route::middleware([
     Route::get('/estimate/{id}/document/{document_id}/production_details', [Documents::class, 'productionDetails'])->name('estimate.document.production_details');
     foreach(['saddlestitch', 'digest-saddlestitch', 'folder', 'multi-sheet', 'perfect-bind', 'single-sheet', 'custom'] as $slug) {
         Route::get('/estimate/{id}/document/create/{type}', [Documents::class, 'create'])->name("estimates.documents.create.{$slug}");
+        // @todo EDIT
     }
 
     Route::get('/shipping/estimate/{id}', [Shipping::class, 'drops'])->name('estimate.shipping.drops');
+    Route::post('/shipping/estimate/{id}/processDropInstance', [Shipping::class, 'processDropInstance']);
+    Route::get('/shipping/estimate/{id}/updateEstimateShipState', [Shipping::class, 'updateEstimateShipState']);
+    Route::get('/shipping/estimate/{id}/setDropInstanceDeliveryDate', [Shipping::class, 'setDropInstanceDeliveryDate']);
+    Route::get('/shipping/estimate/{id}/deleteDropInstance', [Shipping::class, 'deleteDropInstance']);
+    Route::get('/shipping/estimate/{id}/setCustomDropAddress', [Shipping::class, 'setCustomDropAddress']);
+    /*
+  Route::get('/estimate/{id}/deleteDropInstance', ['uses' => 'ShippingApi@deleteDropInstance', 'as' => 'shipping.deleteDropInstance']);
+  Route::get('/estimate/{id}/setCustomDropAddress', ['uses' => 'ShippingApi@setCustomDropAddress', 'as' => 'shipping.setCustomDropAddress']);
+  Route::get('/shipto/{id}', ['uses' => 'ShippingApi@ajaxGetShipto']);
+  Route::post('/estimate/{id}/reassignDropInstance', ['uses' => 'ShippingApi@ajaxReassignDropInstance']);
+  */
 });

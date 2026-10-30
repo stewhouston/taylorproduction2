@@ -8,11 +8,13 @@ use App\Models\Company;
 use App\Models\PricingRateSet;
 use App\Models\DropInstance;
 use App\Models\User;
+use App\Models\Document;
 use App\Support\TaylorUtility;
 use \Moment\Moment;
 
 class EstimateService {
     protected $estimate;
+    const INVALID_ESTIMATE_MESSAGE = "Estimate not valid. Previously applied adjustments may no longer be applicable. Contact Taylor-Demers.";
 
     public function __construct(Estimate $estimate) 
     {
@@ -77,6 +79,14 @@ class EstimateService {
     $estimate->save();
   }
 
+  public static function evaluateEstimateAlerts(Estimate $estimate) 
+  {
+    if ($estimate->hasAdjustments() || $estimate->adjust_count >= 1) {
+      $estimate->addAlert(EstimateService::INVALID_ESTIMATE_MESSAGE);
+      $estimate->save();
+    }
+  }
+
   public static function updateFilesReqDate(int $estimate_id) {
     $estimate = Estimate::find($estimate_id);
 
@@ -97,7 +107,7 @@ class EstimateService {
         return $estimate->save();
     } */
     else {
-      $estimate->files_required_by = $files_req_date->format();
+      $estimate->files_required_by = $files_req_date->format('Y-m-d H:i:s');
 
       // Clear any custom set adjustments for the files required by field as a new one (more conservative) has been generated
       $estimate->files_require_adjustment = null;
@@ -116,7 +126,14 @@ class EstimateService {
       return $m->setYear(0); // null/false idiom
     }
 
-    $earliest_drop_delivery_date = new Moment($earliest_drop_instance->delivery_date);
+    // 2026 strip microseconds
+    if (strpos($earliest_drop_instance->delivery_date, '.') !== false) {
+      $d = array_first(explode('.', $earliest_drop_instance->delivery_date));
+    } else {
+      $d = $earliest_drop_instance->delivery_date;
+    }
+
+    $earliest_drop_delivery_date = new Moment($d);
     $earliest_drop_delivery_date->setImmutableMode(true);
 
     if (ShippingService::zoneIsGTA($earliest_drop_instance->shipto->zone)) {
@@ -207,5 +224,13 @@ class EstimateService {
     }
 
     return $file_req_date;
+  }
+
+  protected static function dateIsWeekend(Moment $date): bool 
+  {
+    $day_of_week = intval($date->format('w'));
+    $is_saturday = (bool) ($day_of_week === 6);
+    $is_sunday = (bool) ($day_of_week === 0);
+    return $is_saturday || $is_sunday;
   }
 }

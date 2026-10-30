@@ -12,10 +12,16 @@
                     <span class="font-semibold">Mail Date:</span> <span>{{ $estimate->client_reference_mail_date }}</span>
                 </div>
             </div>
-            <div>
+            <div class="flex items-center">
                 <button id="btn-save-all-drops"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md border border-gray-600 transition-colors duration-150 mr-2"
                 >Save All</button>
+
+                <a class="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md border border-gray-300 transition-colors duration-150 cursor-pointer no-underline"
+                    href="{{ route('estimate.show', $estimate->id) }}"
+                >
+                    Back to Estimate
+                </a>
             </div>
         </div>
     </x-slot>
@@ -47,7 +53,7 @@
                             <th class="bg-gray-800 text-white">&nbsp;</th>
                             <th class="bg-gray-800 text-white text-left">Company</th>
                             <th class="bg-gray-800 text-white text-left">City/Addr</th>
-                            <th class="bg-gray-800 text-white text-left" style="width: 180px;">Delivery Date</th>
+                            <th class="bg-gray-800 text-white text-left">Delivery Date</th>
                             <th class="bg-gray-800 text-white"># Documents</th>
                             <th class="bg-gray-800 text-white">Cost</th>
                             <!-- qty no longer  being displayed -->
@@ -78,7 +84,7 @@
         w.taylor.shiptos = sessionFz({!! html_entity_decode(json_encode($shiptos)) !!});
         w.taylor.zones = sessionFz({!! html_entity_decode(json_encode($zones)) !!});
         w.taylor.documents = sessionFz({!! html_entity_decode(json_encode($documents)) !!});
-        w.taylor.dropInstances = sessionFz({!! html_entity_decode(json_encode($drop_instances)) !!});
+        w.taylor.dropInstances = {!! html_entity_decode(json_encode($drop_instances)) !!};
         w.taylor.statHolidaysDb = {!! html_entity_decode(json_encode($stat_holidays_db)) !!};
         w.taylor.initNotification = {!! html_entity_decode(json_encode($init_notification)) !!};
     }(window));

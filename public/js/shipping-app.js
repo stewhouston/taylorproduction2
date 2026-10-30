@@ -111,7 +111,8 @@
         <td class="date-cell">\
             <input type="checkbox" class="date-apply-mode-checkbox" style="float: left; margin-top: 4px; margin-right: 5px;" />\
             <span class="shipto-date-span">not set</span>\
-            <a class="fa fa-calendar btn-edit-delivery-date" title="Edit Delivery Date"></a>\
+            <a class="fa fa-calendar btn-edit-delivery-date cursor-pointer" title="Edit Delivery Date"></a>\
+            <div class="datepicker-container hidden"></div>\
         </td>\
         <td style="text-align: center;" class="shipto-document-count-cell"><!-- val --></td>\
         <td style="text-align: center; display: none;" class="shipto-qty-cell"><!-- val --></td>\
@@ -332,7 +333,7 @@
       var dropDocumentsQty = $.parseJSON(dropInstance['documents_qty']);
       var hasDeliveryDate = !!dropInstance['delivery_date'];
       var dateText = (hasDeliveryDate)
-          ? moment(dropInstance['delivery_date']).format('DD/MM/YYYY h:mma') : null;
+          ? moment(dropInstance['delivery_date']).format('YYYY-MM-DD h:mma') : null;
 
       $dropRow.find('.shipto-date-span').text(dateText || 'not set');
 
@@ -432,7 +433,7 @@
       // a copy of the dropInstance before changes occurred
       var originalDropInstance = _.cloneDeep(_.find(taylor.dropInstances, { id: _dropInstanceId }));
       $.ajax({
-          method: 'post',
+          method: 'POST',
           url: location.origin + '/shipping/estimate/' + estimateId + '/processDropInstance',
           data: withLaravelCSRF({
             estimateId: estimateId,
@@ -446,7 +447,7 @@
             taylor.dropInstances = taylor.dropInstances.concat(taylor.dropInstances, [dropInstance]);
 
             // Whether or not any modifications were made to the given drop (note that this save procedure can often occur on drops that have not been modified)
-            var changesDidOccur = $.inverse(_.isEqual(dropInstance, originalDropInstance));
+            var changesDidOccur = _.isEqual(dropInstance, originalDropInstance) ? false : true;
 
             // Determine the date for the currently saved drop as it exists in the DOM. This is used to persist the date if it was set before the drop was created in the database. Otherwise these variables are not used.
             var deliveryDateText = $dropShiptoRow.find('.shipto-date-span').text();
@@ -571,8 +572,8 @@
           shiptoId: $dropRow.data('shipto-id'),
           deliveryDate: deliveryDateUnix
         },
-        success: function() {
-          console.debug('SUCCESS setDropInstanceDeliveryDate', arguments);
+        success: function(dropInstance) {
+          console.debug('SUCCESS setDropInstanceDeliveryDate', dropInstance);
         },
         error: function() {
           console.error('shipping.bindDatePicker::xhrSaveDeliveryDate err:', arguments);
@@ -609,8 +610,8 @@
         method: 'get',
         url: location.origin + '/shipping/estimate/' + estimateId + '/updateEstimateShipState',
         data: {
-          usesCustomAddresses: $.number($.bool(_.size(shipping.dropInstancesWithCustomAddresses()))),
-          customAddressWasChanged: $.number(shipping.dropUsesCustomAddress(dropInstance))
+          usesCustomAddresses: Number(Boolean(_.size(shipping.dropInstancesWithCustomAddresses()))),
+          customAddressWasChanged: Number(shipping.dropUsesCustomAddress(dropInstance))
         },
         success: function(response) {
           console.debug('RESPONSE:', response);
@@ -632,49 +633,36 @@
       if (_.isEmpty(dropInstance)) { return false }
       // List of all shiptos rows using custom addresses in the system
       var customShiptoIds = _.filter(taylor.shiptos, function(shipto) {
-        return $.bool(shipto['uses_custom_addresses']);
+        return Boolean(shipto['uses_custom_addresses']);
       });
-      return $.bool(_.find(customShiptoIds, { id: dropInstance['shipto_id'] }));
+      return Boolean(_.find(customShiptoIds, { id: dropInstance['shipto_id'] }));
     }
 
     shipping.bindDatePicker = function($dropRow, $deliveryDateBtn) {
       var estimateId = taylor.estimateId;
 
       $deliveryDateBtn.on('click', function(event) {
-        $deliveryDateBtn.tooltipster('instance').open();
-      });
+        //$deliveryDateBtn.tooltipster('instance').open();
+        var $datepickerContainer = $deliveryDateBtn.closest('.date-cell').find('.datepicker-container');
+        $datepickerContainer.toggleClass('hidden');
 
-      $deliveryDateBtn.tooltipster({
-          trigger: 'custom',
-          content: (function() {
-            var $dateTip = $('<div style="position: relative;">\
-            <input type="text" class="delivery-date" style="width: 160px; padding: 7px;" placeholder="Delivery Date" />\
-             <a class="btn btn-default btn-save-delivery-date">Save</a>\
-             <a class="btn btn-default btn-apply-delivery-dates">Apply To...</a>\
-            </div>');
-            return $dateTip;
-          }()),
-          theme: 'tooltipster-noir taylor-date-tipster',
-          interactive: true,
-          delay: [0, 0],
-          animationDuration: 0,
-          functionAfter: function(tipster, elems) {
-            var $shippingRow = $(elems.origin).closest('tr');
-            $shippingRow.removeClass('date-picker-open');
-            $(window).off('click.closeTip');
-            if (shipping.dateApplyModeActive) {
-              shipping.toggleDateApplyMode($shippingRow);
-            }
-          },
-          // when the date btn is clicked
-          functionReady: function(tipster, elems) {
-            var $dateBtn = $(elems.origin);
-            var $tooltip = $(elems.tooltip);
+        if (!$datepickerContainer.is(':visible')) {
+          $datepickerContainer.html('');
+        } else {
+          var $tooltip = $('<div class="absolute p-4 border-2 border-black bg-white" style="transform: translateX(52px);">\
+            <input type="text" class="delivery-date" style="width: 180px; padding: 7px;" placeholder="Delivery Date" />\
+             <a class="btn-save-delivery-date bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4\
+              rounded-md border border-gray-300 transition-colors duration-150 cursor-pointer" style="text-wrap: nowrap;">Save</a>\
+             <a class="btn-apply-delivery-dates bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4\
+              rounded-md border border-gray-300 transition-colors duration-150 cursor-pointer" style="text-wrap: nowrap;">Apply To...</a>\
+            <a class="btn-cancel-delivery-date bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 font-medium py-2 px-4\
+              rounded-md border border-gray-300 transition-colors duration-150 cursor-pointer" style="text-wrap: nowrap;">Cancel</a>\
+            </div>').appendTo($datepickerContainer);
 
             var $deliveryDate = $tooltip.find('.delivery-date'); // field
-            var $shippingRow = $dateBtn.closest('tr');
+            var $shippingRow = $deliveryDateBtn.closest('tr');
 
-            var dropInstanceId = $dateBtn.closest('tr').data('drop-instance-id');
+            var dropInstanceId = $shippingRow.data('drop-instance-id');
             var dropInstance = _.find(taylor.dropInstances, { id: dropInstanceId });
             var shipto;
             if (dropInstance && dropInstance['shipto_id']) {
@@ -699,33 +687,43 @@
             else {
               defaultDeliveryDate = moment(taylor.estimate['client_reference_mail_date'], "MMM D, YYYY");
             }
-            var defaultDeliveryDate = defaultDeliveryDate.subtract(7, 'days').hours(17).minutes(0).seconds(0);
-
+            defaultDeliveryDate = defaultDeliveryDate.subtract(7, 'days').hours(17).minutes(0).seconds(0);
+            if (dropInstance['delivery_date']) {
+              // Remove microseconds and seconds so jQuery ui datepicker autofills 
+              defaultDeliveryDate = dropInstance['delivery_date'].split('.')[0];
+              defaultDeliveryDate = defaultDeliveryDate.split(':');
+              defaultDeliveryDate.pop();
+              defaultDeliveryDate = defaultDeliveryDate.join(':');
+            }
+            $deliveryDate.val(defaultDeliveryDate);
+            var blockedDates = getStatHolidayDates();
             $deliveryDate.datetimepicker({
-              format: 'DD/MM/YYYY h:mma',
-              useCurrent: false,
-              defaultDate: dropSetDeliveryDate || defaultDeliveryDate,
+              dateFormat: 'yy-mm-dd',
+              timeFormat: 'h:mmtt',
+              hours: 4,
+              // defaultDate: defaultDeliveryDate.toDate(), // @todo this doesnt work; infer from $deliveryDate value
+              beforeShowDay: function(date) {
+                var stringDate = $.datepicker.formatDate('yy-mm-dd', date);
+                if ($.inArray(stringDate, blockedDates) !== -1) {
+                    return [false, "blocked-date-css", "This date is unavailable"]; 
+                }
+                return [true, ''];
+              },
+              //useCurrent: false,
+              //defaultDate: dropSetDeliveryDate || defaultDeliveryDate,
               //disabledDates: getStatHolidayDates(),
-              debug: true,
-              viewDate: dropSetDeliveryDate || moment().hours(17).minutes(0).seconds(0),
+              //debug: true,
+              // viewDate: dropSetDeliveryDate || moment().hours(17).minutes(0).seconds(0),
               //minDate: minDate
-            })
-            .on('dp.show', function(event) {
-              $calendarHighlightStatHolidays(shipto);
-            })
-            .on('dp.change', function(event) {
-              // autosave after clicking a date on the datetimepicker
-              //$('.btn-save-delivery-date:visible').trigger('click');
-            })
-            .on('dp.update', function(event) {
-              $calendarHighlightStatHolidays(shipto);
             });
+            $deliveryDate.datetimepicker('show');
 
             // tooltip 'Save' button
             $tooltip.on('click', '.btn-save-delivery-date', function(event) {
               var deliveryDate = $deliveryDate.val();
-              // @todo ISO is preferred here
-              var deliveryDateUnix = moment(deliveryDate, 'DD/MM/YYYY h:mma').format('X');
+              var deliveryDateUnix = moment(deliveryDate, 'YYYY-MM-DD h:mma').format('X');
+              // console.log('deliveryDate', deliveryDate);
+              // console.log('deliveryDateUnix', deliveryDateUnix);
               var updateRows = [$dropRow];
               // 'Apply to...' checkboxes
               $('input.date-apply-mode-checkbox:checked').each(function(i, checkbox) {
@@ -737,52 +735,27 @@
                 shipping.persistDeliveryDate($_dropRow, taylor.estimateId, deliveryDateUnix);
                 $_dropRow.find('.shipto-date-span').text(deliveryDate);
               });
-              $deliveryDateBtn.tooltipster('hide');
+
+              $datepickerContainer.toggleClass('hidden').html('');
+              if (shipping.dateApplyModeActive) {
+                shipping.toggleDateApplyMode($shippingRow);
+              }
+            });
+
+            $tooltip.on('click', '.btn-cancel-delivery-date', function(event) {
+              $datepickerContainer.toggleClass('hidden').html('');
             });
 
             $tooltip.on('click', '.btn-apply-delivery-dates', function(event) {
               shipping.toggleDateApplyMode($shippingRow);
             });
-            $deliveryDate.data("DateTimePicker").show();
 
-            $(window).on('click.closeTip', function(event) {
-              var $clickTarget = $(event.target);
-              if ($clickTarget.closest('.tooltipster-box').length || $clickTarget.closest('.date-cell').length) {
-                return;
-              }
-              $deliveryDateBtn.tooltipster('instance').close();
-            });
-          }
-      });
-    }
-
-    function $calendarHighlightStatHolidays(shipto) {
-      var isUSA;
-      if (shipto && _.isString(shipto.zone)) {
-        isUSA = /^USA/.test(shipto.zone);
-      }
-      var statHolidaysCalendarFormat = _.map(getStatHolidayDates(isUSA), function(statMoment) {
-        return statMoment.format('MM/DD/YYYY');
-      });
-
-      $('.bootstrap-datetimepicker-widget').find('.day').each(function(i, dayElem) {
-        var dayElemDate = dayElem.getAttribute('data-day');
-        if (~statHolidaysCalendarFormat.indexOf(dayElemDate)) {
-            dayElem.classList.add('stat-holiday');
+            $shippingRow.removeClass('date-picker-open');
+            if (shipping.dateApplyModeActive) {
+              shipping.toggleDateApplyMode($shippingRow);
+            }
         }
       });
-    }
-
-    function getStatHolidayDates(isUSA) {
-      return _.compact(_.map(w.taylor.statHolidaysDb, function(customDateObj) {
-        if (isUSA === true && customDateObj['observance_can'] == 1) {
-          return;
-        }
-        if (isUSA === false && customDateObj['observance_usa'] == 1) {
-          return;
-        }
-        return moment(customDateObj['date_string'], 'D-MMM-YYYY');
-      }));
     }
 
     // Prevent user from unchecking 'Apply To' date change for currently active row.
@@ -885,7 +858,15 @@
       var address1 = (typeof customAddress === 'string') ? customAddress : customAddress.address1;
       var incompleteLabel = '(incomplete)';
       address1 = address1 || incompleteLabel;
-      var $dropInstanceRow = $dropsAppTable.find('tr.shipto-destination-row').dataFilter('drop-instance-id=' + dropInstanceId);
+      var $dropInstanceRows = $dropsAppTable.find('tr.shipto-destination-row');
+      var $dropInstanceRow;
+      // This is ugly, but replaces an old msvkit function called `dataFilter`. [data-drop-instance-id="#"] query is not working
+      for(var i = 0; i < $dropInstanceRows.length; i++) {
+        if ($dropInstanceRows.eq(i).data('drop-instance-id') == dropInstanceId) {
+          $dropInstanceRow = $dropInstanceRows.eq(i);
+        }
+      }
+      console.log('dropInstanceId', dropInstanceId);
       var addressShortDisplay = _.slice(address1, 0, 24).join('');
       var $shipCell = $dropInstanceRow.find('.shipto-city-cell');
       var ellipses = (addressShortDisplay != address1) ? '…' : '';
@@ -919,8 +900,8 @@
     }
 
     $('section.drop-page-content').on('click', _.once(function(event) {
-      var filesReqAdjustment = $.string(window.taylor.estimate['files_require_adjustment']);
-      var hasFilesRequireAdjustment = $.notEmpty(filesReqAdjustment) && $.bool(!/^0000/.test(filesReqAdjustment));
+      var filesReqAdjustment = '' + taylor.estimate['files_require_adjustment'];
+      var hasFilesRequireAdjustment = !_.isEmpty(filesReqAdjustment) && Boolean(!/^0000/.test(filesReqAdjustment));
       if (hasFilesRequireAdjustment) {
         alert('The file required date for this estimate has been set manually. Any change to shipping will recalculate the file required date.');
       }
@@ -988,6 +969,13 @@
           blockInteraction: Boolean(taylor.initNotification.blockInteraction)
         });
       }
+    }
+
+    function getStatHolidayDates() {
+        // from static content ShippingService::getStatHolidays
+        return _.map(w.taylor.statHolidaysDb, function(customDateObj) {
+            return moment(customDateObj['date_string'], 'D-MMM-YYYY').format('YYYY-MM-DD');
+        });
     }
 
     function withLaravelCSRF(obj) {

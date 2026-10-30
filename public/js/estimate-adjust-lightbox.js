@@ -132,7 +132,7 @@
                     .datetimepicker({
                         dateFormat: 'yy-mm-dd',
                         timeFormat: 'h:mmtt',
-                        defaultDate: filesRequiredDate ? filesRequiredDate.format('YYYY-MM-DD h:mma') : '',
+                        defaultDate: filesRequiredDate ? filesRequiredDate.format('YYYY-MM-DD h:mma') : '', // @todo confirm this works
                         beforeShowDay: function(date) {
                             var stringDate = $.datepicker.formatDate('yy-mm-dd', date);
                             if ($.inArray(stringDate, blockedDates) !== -1) {
