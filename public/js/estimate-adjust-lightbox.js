@@ -11,7 +11,7 @@
                     // row
                     '<tr><td style="font-weight: bold; padding-top: 8px; padding-right: 30px; vertical-align: top;">\
                             Print Cost Adjustment:\
-                         </td><td><div class="input-group" style="padding-bottom: 10px;">\
+                         </td><td><div class="input-group flex" style="padding-bottom: 10px;">\
                             <span class="input-group-addon">$</span>\
                             <input type="text" class="form-control" placeholder="0.00" name="print_sell_adjustment">\
                         </div></td><td>\
@@ -22,7 +22,7 @@
                     // row
                     '<tr><td style="font-weight: bold; padding-top: 8px; padding-right: 30px; vertical-align: top;">\
                             Ship Cost Adjustment:\
-                        </td><td><div class="input-group" style="padding-bottom: 10px;">\
+                        </td><td><div class="input-group flex" style="padding-bottom: 10px;">\
                             <span class="input-group-addon">$</span>\
                             <input type="text" class="form-control" placeholder="0.00" name="drop_sell_adjustment">\
                         </div></td><td>\

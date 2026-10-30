@@ -21,13 +21,13 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.2/moment.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.5.0/featherlight.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.5.3/jquery.timeago.min.js"></script>
-        <script src="/js/tooltipster.bundle.min.js"></script><!-- @todo if not in use, remove -->
+        <script src="/js/tooltipster.bundle.min.js"></script>
         <script src="/js/taylor1.js"></script>
         @show
 
         @section('styles')
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/tooltipster.min.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/themes/tooltipster-noir.min.css" /><!-- @todo if not in use, remove -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/themes/tooltipster-noir.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.6.1/featherlight.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">

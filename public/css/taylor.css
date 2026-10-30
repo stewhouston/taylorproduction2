@@ -1,3 +1,105 @@
 tr.estimate-archived {
   background-color: #e3e0c7 !important;
 }
+
+/* Shipping App */
+.shipping-drops-table {
+  /* legacy directive */
+  /*border-collapse: separate !important;*/
+}
+
+#ship-address-list tbody td {
+  border-bottom: 1px solid #ddd;
+  /* the table is acting peculiar, these values are larger than needed but render nicely */
+  padding-bottom: 20px;
+  padding-top: 20px;
+}
+
+.shipping-drops-table .shipto-destination-row {
+  height: 64px;
+}
+
+.shipping-drops-table th {
+  white-space: nowrap !important;
+}
+
+.shipping-drops-table td {
+  vertical-align: middle !important;
+}
+
+.shipping-drops-table td.cell-align-top {
+  vertical-align: top !important;
+}
+
+.shipping-drops-table .document-table-inline {
+  width: 100%;
+}
+
+.shipping-drops-table .document-table-inline tbody tr:hover td {
+  background-color: #f7f7f7 !important;
+  cursor: default;
+}
+
+.shipping-drops-table .document-table-inline th,
+.shipping-drops-table .document-table-inline td {
+  padding: 4px 6px;
+  border: none !important;
+}
+
+.shipping-drops-table .drop-documents-row td {
+  border-top: 1px solid #aaa;
+  background-color: #eee !important;
+  border-bottom: 1px solid #666;
+}
+
+.drop-page-content {
+  min-height: 800px !important;
+}
+
+.drop-page-content .btn-edit-delivery-date {
+  float: right;
+  color: #777;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.drop-page-content .btn-edit-delivery-date:hover {
+  color: #333;
+}
+
+.shipto-destination-row td {
+  border-top: 1px solid transparent !important;
+}
+
+.document-table-inline .input-drop-qty {
+  width: 60px !important;
+  padding: 2px 4px;
+  border: 1px solid #666;
+}
+
+.document-table-inline .input-drop-qty:focus {
+  background-color: #fffdef;
+  border: 1px solid #111;
+}
+
+.shipto-destination-row.expanded td {
+  background-color: #efefff !important;
+  border-top: 1px solid #7788b1  !important;
+}
+
+.shipto-destination-row.date-picker-open {
+  background: hsl(169, 22%, 90%);
+}
+
+.date-apply-mode-checkbox {
+  display: none;
+}
+
+tr.date-apply-mode-active .date-apply-mode-checkbox {
+  display: block;
+}
+
+.tooltipster-content {
+  font-family: sans-serif !important;
+  overflow: visible !important;
+}

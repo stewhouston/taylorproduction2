@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Estimates;
 use App\Http\Controllers\Documents;
+use App\Http\Controllers\Shipping;
 
 Route::get('/', function () {
     return redirect('/login');
@@ -43,5 +44,5 @@ Route::middleware([
         Route::get('/estimate/{id}/document/create/{type}', [Documents::class, 'create'])->name("estimates.documents.create.{$slug}");
     }
 
-    Route::get('/shipping/estimate/{id}', [Estimates::class, 'show'])->name('shipping.drops');
+    Route::get('/shipping/estimate/{id}', [Shipping::class, 'drops'])->name('estimate.shipping.drops');
 });

@@ -68,7 +68,7 @@
                             <a style="cursor: pointer;" onclick="window.open('{{ route("estimate.print", $estimate->id) }}','name','width=800,height=920'); return false;"><i class="fa fa-print"></i> Print</a>
                         </li>
                         <li id="list-edit-shipping">
-                            <a href="{{route('shipping.drops', $estimate->id)}}" id="shipping-button">
+                            <a href="{{route('estimate.shipping.drops', $estimate->id)}}" id="shipping-button">
                             <i class="fa fa-truck"></i> Shipping
                             </a>
                         </li>
@@ -157,7 +157,7 @@
                                 {{$document->report_description}}
                                 @if (!empty($document->specification))
                                 <span>(<a class="toggle-specification text-blue-800" href="#">Show User Specification</a>)</span>
-                                <pre class="specification-embed-container hidden">{{ trim($document->specification) }}</pre>
+                                <pre class="specification-embed-container hidden bg-yellow-100 border border-yellow-800 p-2 rounded-md">{{ trim($document->specification) }}</pre>
                                 @endif
                                 <div style="padding-left: 30px;">
                                     @foreach($document->components as $component)
@@ -449,7 +449,7 @@
     <link rel="stylsheet" href="/css/jquery-ui.min.css" />
     <link rel="stylesheet" href="/css/jquery-ui.structure.min.css" />
     <link rel="stylesheet" href="/css/jquery-ui.theme.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css" integrity="sha512-LT9fy1J8pE4Cy6ijbg96UkExgOjCqcxAC7xsnv+mLJxSvftGVmmc236jlPTZXPcBRQcVOWoK1IJhb1dAjtb4lQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css" />
     @endsection
 
     @section('scripts')

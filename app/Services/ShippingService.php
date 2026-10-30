@@ -6,15 +6,23 @@ use App\Models\Shipto;
 use App\Models\StatHoliday;
 use App\Models\Estimate;
 use App\Models\DropInstance;
+use App\Models\Zone;
 use \Moment\Moment;
 use Illuminate\Database\Eloquent\Collection;
 
 class ShippingService {
-  public static function getStatHolidaysDb() {
+  public static function getStatHolidaysDb() 
+  {
       return StatHoliday::orderBy('id', 'desc')->get();
   }
 
-  public function getShiptos($company_visibility_id = 1, array $clause_params = []): Collection {
+  public function getZones() 
+  {
+      return Zone::all();
+  }
+
+  public function getShiptos($company_visibility_id = 1, array $clause_params = []): Collection 
+  {
       $clause_params = array_merge(['is_active' => 1], $clause_params);
       $shiptos_lookup = Shipto::where('company_visibility_id', $company_visibility_id);
       if ($clause_params['is_active'] != '*') {
@@ -27,7 +35,8 @@ class ShippingService {
    * Used to determine if an instance of Moment is being used in place of a null/false return value so as to work
    *  within the restrictions of PHP type hinting.
    */
-  public static function isEmptyMoment($moment_instance): bool {
+  public static function isEmptyMoment($moment_instance): bool 
+  {
     if (empty($moment_instance)) {
       return true;
     }
@@ -38,7 +47,8 @@ class ShippingService {
     return intval($moment_instance->format('U')) < -62138;
   }
 
-  public static function getEarliestDeliveryDrop(Estimate $estimate): ?DropInstance {
+  public static function getEarliestDeliveryDrop(Estimate $estimate): ?DropInstance 
+  {
       if (empty($estimate->dropInstances) || $estimate->dropInstances->count() == 0) {
         return null;
       }
@@ -75,7 +85,8 @@ class ShippingService {
       return $earliest_drop_instance;
     }
 
-    public static function zoneIsGTA(string $zone):bool {
+    public static function zoneIsGTA(string $zone): bool 
+    {
       return (bool) preg_match('/^GTA/', $zone);
     }
 }
