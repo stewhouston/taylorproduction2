@@ -27,7 +27,7 @@
             <td>' + shipto.company + '</td>\
             <td><span title="' + addressTitle + '" style="cursor: default;">' + (shipto.city || '') + '</span></td>\
             <td><a class="btn-add-drop ' + (isPrintOrder ? 'disabled' : '') + ' cursor-pointer bg-gray-100 hover:bg-gray-200 active:bg-gray-900 text-gray-800 font-medium\
-             py-2 px-4 rounded-md border border-gray-300 transition-colors duration-150" \
+             py-2 px-4 rounded-md border border-gray-300 transition-colors duration-150 text-nowrap" \
               data-shipto-id="' + shipto.id + '">Add Drop</a>\
             </td>\
         </tr>');

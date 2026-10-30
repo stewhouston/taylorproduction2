@@ -41,18 +41,18 @@
                 <div class="w-full">
                     <div id="app-notifications"></div>
                     <h3 class="text-2xl font-semibold border-b border-gray-200 mb-2">Drops</h3>
-                    <table id="drops-app-table" class="shipping-drops-table w-full">
+                    <table id="drops-app-table" class="shipping-drops-table w-full" cellpadding="8">
                         <thead>
-                            <th>&nbsp;</th>
-                            <th>&nbsp;</th>
-                            <th class="text-left">Company</th>
-                            <th class="text-left">City/Addr</th>
-                            <th class="text-left" style="width: 180px;">Delivery Date</th>
-                            <th style="text-align: center;"># Documents</th>
-                            <th style="text-align: center;">Cost</th>
+                            <th class="bg-gray-800 text-white">&nbsp;</th>
+                            <th class="bg-gray-800 text-white">&nbsp;</th>
+                            <th class="bg-gray-800 text-white text-left">Company</th>
+                            <th class="bg-gray-800 text-white text-left">City/Addr</th>
+                            <th class="bg-gray-800 text-white text-left" style="width: 180px;">Delivery Date</th>
+                            <th class="bg-gray-800 text-white"># Documents</th>
+                            <th class="bg-gray-800 text-white">Cost</th>
                             <!-- qty no longer  being displayed -->
-                            <th style="text-align: center; display: none;">Qty</th>
-                            <th>&nbsp;</th>
+                            <th class="bg-gray-800 text-white" style="text-align: center; display: none;">Qty</th>
+                            <th class="bg-gray-800 text-white">&nbsp;</th>
                         </thead>
                         <tbody id="drops-tbody">
                             <tr id="empty-drops-block-row">
