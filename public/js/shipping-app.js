@@ -687,8 +687,9 @@
             else {
               defaultDeliveryDate = moment(taylor.estimate['client_reference_mail_date'], "MMM D, YYYY");
             }
-            defaultDeliveryDate = defaultDeliveryDate.subtract(7, 'days').hours(17).minutes(0).seconds(0);
+            defaultDeliveryDate = defaultDeliveryDate.subtract(7, 'days').hours(17).minutes(0).seconds(0).format('YYYY-MM-DD HH:mm');
             if (dropInstance['delivery_date']) {
+              console.log("dropInstance['delivery_date']", dropInstance['delivery_date']);
               // Remove microseconds and seconds so jQuery ui datepicker autofills 
               defaultDeliveryDate = dropInstance['delivery_date'].split('.')[0];
               defaultDeliveryDate = defaultDeliveryDate.split(':');

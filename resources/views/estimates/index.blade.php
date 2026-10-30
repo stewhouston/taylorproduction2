@@ -72,7 +72,7 @@
                                 <td class="__last_modified_by_resolved">{{ $estimate->getLastModifiedBy() }}</td>
                                 <td class="actions" style="padding-right: 16px; font-size: 86%; padding-top: 9px; width: 170px;">
                                     @if (!auth()->user()->isReadOnly())
-                                        <a class="shipping-link inline-block mr-4" href="#">Shipping</a>
+                                        <a class="shipping-link inline-block mr-4" href="{{ route('estimate.shipping.drops', $estimate->id) }}">Shipping</a>
                                         <a class="btn-archive-estimate" href="#archive-{{ $estimate->id }}">{{$estimate->is_archived ? 'Unarchive' : 'Archive'}}</a>
                                     @else
                                         &nbsp;
