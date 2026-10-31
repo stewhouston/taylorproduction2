@@ -45,8 +45,9 @@ Route::middleware([
     Route::get('/estimate/{id}/document/{document_id}/production_details', [Documents::class, 'productionDetails'])->name('estimate.document.production_details');
     foreach(['saddlestitch', 'digest-saddlestitch', 'folder', 'multi-sheet', 'perfect-bind', 'single-sheet', 'custom'] as $slug) {
         Route::get('/estimate/{id}/document/create/{type}', [Documents::class, 'create'])->name("estimates.documents.create.{$slug}");
-        // @todo EDIT
     }
+    Route::get('/estimate/{estimate_id}/document/{document_id}/edit', [Documents::class, 'edit']);
+    Route::post('/estimate/{estimate_id}/document/{document_id}/update', [Documents::class, 'update'])->name('estimate.document.update');
 
     Route::get('/shipping/estimate/{id}', [Shipping::class, 'drops'])->name('estimate.shipping.drops');
     Route::post('/shipping/estimate/{id}/processDropInstance', [Shipping::class, 'processDropInstance']);

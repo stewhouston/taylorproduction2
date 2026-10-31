@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Laravel\Head\Facades\Head;
 use App\Services\DocumentService;
 use App\Services\EstimateService;
+use App\Services\ShippingService;
 use App\Models\Estimate;
 use App\Models\Document;
 use App\Models\DocumentType;
@@ -18,7 +19,8 @@ use Illuminate\Http\JsonResponse;
 class Documents extends Controller
 {
     public function __construct(
-        protected DocumentService $documentService
+        protected DocumentService $documentService,
+        protected ShippingService $shippingService
     ) 
     {
 
@@ -48,6 +50,50 @@ class Documents extends Controller
             EstimateService::sendCustomDocumentPendingEmail($estimate, $document);
         }*/
         return redirect(route('estimate.show', $estimate->id));
+    }
+
+    public function edit(Request $request, int $estimate_id, int $document_id)
+    {
+      $estimate = Estimate::find($estimate_id);
+      $document = Document::find($document_id);
+      $document_type = $document->document_type;
+      Head::title("Edit {$document_type->name} Document - Taylor-Demers Estimating");
+      $cover_component = $document->components()->where('type', 'Cover')->first();
+      $text_component = $document->components()->where('type', 'Text')->first();
+      $document_type_names = DocumentTypeName::where('status', 'A')->orderBy('name', 'asc')->get();
+      $book_component_values = $this->documentService->getBookComponentValues($document);
+      $compat_has_cover_component = (bool) $this->documentService->bookHasCoverComponent($book_component_values);
+      $current_user = $request->user();
+      $user_company = $current_user->company;
+      $_document_type_curve_ref = preg_replace("/\s/", "_", $document_type->name);
+      $page_count_curve_entries = Curve::getNamedMap($user_company->id, [
+        'like' => "{$_document_type_curve_ref}_Max_Page_Count"
+      ])->toArray();
+      $production_document = $document->production()->first();
+      $original_production_document = serialize(
+        !empty($production_document) ? $production_document->toArray() : []
+      );
+      return view("estimates.documents.edit.{$document_type->slug}", compact(
+        'document', 'estimate', 'estimate_id', 'text_component', 'cover_component',
+        'document_type_names', 'book_component_values', 'original_production_document',
+        'document_type', 'page_count_curve_entries', 'current_user', 'compat_has_cover_component'
+      ));
+    }
+
+    public function update(Request $request, int $estimate_id, int $document_id) {
+      $estimate = Estimate::find($estimate_id);
+      $document = $this->documentService->update($request, $document_id, [
+        'active_rate_set_id' => $estimate->active_rate_set_id
+      ]);
+
+      if ($document && $document->is_custom) {
+        EstimateService::sendCustomDocumentPendingEmail($estimate, $document);
+      }
+      // update all shipping drop instances
+      $this->shippingService->recalculateDropInstancesForEstimate($document->estimate->id);
+      EstimateService::evaluateEstimateAlerts($document->estimate);
+      // flash()->success('Document has been successfully updated !');
+      return redirect(route('estimate.show', $document->estimate->id));
     }
 
     public function delete(Request $request, int $estimate_id)

@@ -1283,6 +1283,13 @@ class DocumentService
     );
   }
 
+  // Compatibility check for the existence of a 'cover plus' entity, now stored
+  //  as an explicit `cover_type` value in the components table.
+  public function bookHasCoverComponent(array $book_values): bool {
+    if (empty($book_values['cover_stock'])) return false;
+    return ($book_values['cover_stock'] !== 'none' && $book_values['print_side1'] !== 'none');
+  }
+
   // The `production_document` for a given document as it existed before any changes occurred.
   private function getOriginalProductionDocument($request) {
     $serialized = $request['original_production_document'] ?? $request->input('original_production_document');

@@ -236,7 +236,7 @@
                                 @if($document->is_custom && auth()->user()->isAdmin() && auth()->user()->hasPermissions('price_management'))
                                     <a class="btn-set-custom-parameters text-blue-800 cursor-pointer font-bold underline" data-document-id="{{$document->id}}">Estimate Detail</a> |
                                 @endif
-                                <a type="button" class="btn-edit-estimate p-0 underline text-blue-800" href="#">
+                                <a type="button" class="btn-edit-estimate p-0 underline text-blue-800" href="/estimate/{{ $estimate->id }}/document/{{ $document->id }}/edit">
                                 Edit</a>
                                 | <button type="submit" class="btn-delete-document underline text-blue-800 p-0">Delete</button>
                                 </span>
@@ -462,7 +462,7 @@
         @endif
         @endforeach
     </script>
-    <script type="text/javascript" src="/js/estimate-show.js"></script>
+    <script type="text/javascript" src="/js/estimate-show.js?{{ now()->timestamp }}"></script>
     <script type="text/javascript" src="/js/estimate-adjust-lightbox.js"></script>
     <script type="text/javascript" src="/js/estimate-custom-parameters.js"></script>
 

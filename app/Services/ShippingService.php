@@ -141,6 +141,31 @@ class ShippingService {
     return $drop_instance;
   }
 
+  public function recalculateDropInstancesForEstimate(int $estimate_id): array 
+  {
+      $estimate_drop_instances = DropInstance::where('estimate_id', $estimate_id)->get();
+
+      // Array<DropInstance>
+      $updated_drop_instances = [];
+
+      foreach($estimate_drop_instances as $drop_instance) {
+          $updated_drop_instance = $this->processDropInstanceProcedure(
+              (int) $drop_instance->estimate_id,
+              (int) $drop_instance->shipto_id,
+              (int) $drop_instance->id,
+              (array) json_decode($drop_instance->documents_qty, 1),
+              (int) $drop_instance->estimate->company_id,
+              (int) $drop_instance->last_modified_by,
+              /* don't tick the last modified by field when updating drop data proxied from an edited estimate */
+              ['updateLastModifiedBy' => false]
+          );
+
+          array_push($updated_drop_instances, $updated_drop_instance);
+      }
+
+      return $updated_drop_instances;
+  }
+
   public function getDocumentWeight($document_id, $opts = ['qty' => 1]):float {
 //    $document = $this->getDocument($document_id);
       $production_document = $this->getProductionDocument($document_id);
